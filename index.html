@@ -46,10 +46,54 @@
   #help { position:absolute; right:40px; bottom:24px; font-size:16px; color:#A8C3D6; text-align:right; line-height:1.6; background:rgba(0,17,31,.6); padding:12px 18px; border-radius:12px; transition:opacity .5s; }
   #help.hide { opacity:0; }
   #help kbd { border:1px solid #556; border-radius:4px; padding:0 6px; color:#dde; font-family:inherit; }
-  #logo { position:absolute; left:40px; bottom:28px; height:46px; opacity:.9; transition:opacity .8s; }
+  #logo, .logo-lg { background:#fff; box-sizing:content-box; }
+  #logo { position:absolute; left:40px; bottom:28px; height:40px; padding:9px 16px; border-radius:10px; opacity:.95; transition:opacity .8s; }
   #logo.off { opacity:0; }
-  .logo-lg { display:block; height:92px; margin:34px auto 0; }
+  .logo-lg { display:block; height:76px; padding:18px 30px; border-radius:18px; margin:34px auto 0; }
   #fps { position:absolute; left:8px; bottom:8px; font-size:12px; color:#567; display:none; }
+  #nav, #hint, .m-only { display:none; }
+
+  /* ---------- Móvil / pantallas estrechas (body.m: el lienzo ocupa la ventana) ---------- */
+  body.m { touch-action:none; }
+  body.m #stage { left:0; top:0; width:100%; height:100%; transform:none !important; }
+  body.m #gl { width:100%; height:100%; }
+  body.m .m-only { display:block; }
+  body.m #brand { left:12px; top:calc(8px + env(safe-area-inset-top)); font-size:10px; letter-spacing:2px; }
+  body.m #legend { left:12px; top:calc(26px + env(safe-area-inset-top)); gap:2px; font-size:11px; max-width:62vw; }
+  body.m #legend div:not(.in) { display:none; }
+  body.m #legend i { width:8px; height:8px; margin-right:6px; }
+  body.m #note, body.m #help { display:none; }
+  body.m #logo { left:auto; right:10px; top:calc(8px + env(safe-area-inset-top)); bottom:auto; height:18px; padding:5px 8px; border-radius:6px; }
+  body.m .logo-lg { height:34px; padding:9px 14px; border-radius:10px; margin-top:16px; }
+  body.m #progress { height:3px; z-index:3; }
+  body.m #nav { display:block; }
+  body.m #nav button { position:absolute; bottom:calc(10px + env(safe-area-inset-bottom)); width:40px; height:40px; border-radius:50%; z-index:4;
+    border:1px solid rgba(0,204,102,.55); background:rgba(0,24,46,.7); color:#fff; font-size:24px; line-height:36px; font-family:inherit; }
+  body.m #bprev { left:10px; } body.m #bnext { right:10px; }
+  body.m #hint { display:block; position:absolute; left:56px; right:56px; bottom:calc(16px + env(safe-area-inset-bottom)); text-align:center; font-size:11px; color:#A8C3D6; z-index:3; transition:opacity .6s; }
+  body.m #hint.hide { opacity:0; pointer-events:none; }
+  body.m #panel { transition:none; }
+  body.m #panel.center { top:50%; width:92vw; }
+  body.m #panel .inner { padding:14px 16px; border-radius:18px; }
+  body.m .kicker { font-size:11px; letter-spacing:3px; }
+  body.m .title { font-size:28px; margin:6px 0; }
+  body.m .title.xl { font-size:38px; }
+  body.m .title.md, body.m #panel.bottom .title { font-size:22px; margin:5px 0; }
+  body.m .lead, body.m #panel.bottom .lead { font-size:15px; line-height:1.38; }
+  body.m .small { font-size:12px; margin-top:7px; }
+  body.m .tagline { font-size:12px; padding:5px 12px; margin-top:10px; letter-spacing:1px; }
+  body.m .chip { width:12px; height:12px; margin-right:8px; }
+  /* vertical: ficha como hoja inferior */
+  body.port #panel.bottom { top:auto; bottom:0; left:0; width:100%; transform:none; }
+  body.port #panel.bottom .inner { border-radius:20px 20px 0 0; border-bottom:0; padding:14px 18px calc(62px + env(safe-area-inset-bottom)); max-height:52vh; overflow:auto; }
+  body.port #panel.bottom .inner::before { content:''; display:block; width:40px; height:4px; border-radius:2px; background:rgba(176,223,219,.45); margin:0 auto 10px; }
+  body.port #panel.bottom.empty .inner { padding-bottom:62px; }
+  /* horizontal: ficha en columna derecha */
+  body.land #panel.bottom { top:50%; left:auto; right:10px; width:42vw; transform:translateY(-50%); text-align:left; }
+  body.land #panel.bottom .inner { padding:12px 16px; max-height:calc(100vh - 80px); overflow:auto; }
+  body.land #panel.center .inner { padding:10px 16px; }
+  body.land .title.xl { font-size:32px; }
+  body.land #hint { left:auto; right:58px; width:42vw; text-align:right; }
 </style>
 </head>
 <body>
@@ -64,8 +108,10 @@
     <kbd>F</kbd> pantalla completa · <kbd>A</kbd> autoplay · <kbd>R</kbd> reiniciar<br>
     <kbd>H</kbd> ocultar esta ayuda
   </div>
-  <!-- Logo oficial de Italfarmaco (fuente: https://www.italfarmaco.com/wp-content/uploads/2024/05/Italfarmaco-SpA-Logo.svg), versión en negativo incrustada para funcionar sin conexión. Copia en marca/. -->
-  <img id="logo" alt="Italfarmaco" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMTYyIDQ4LjUiPiA8c3R5bGUgdHlwZT0idGV4dC9jc3MiPiAgLnN0MHtmaWxsOiNGRkZGRkY7fSAuc3Qxe2NsaXAtcGF0aDp1cmwoI1NWR0lEXzJfKTtmaWxsOiNGRkZGRkY7fSAuc3Qye2ZpbGw6bm9uZTt9IC5zdDN7ZmlsbDojMDJDQzY2O30gIDwvc3R5bGU+ICA8cG9seWdvbiBjbGFzcz0ic3QwIiBwb2ludHM9IjM2Ljg5LDcuNTcgMzAuODgsMTYuMDMgMjIuMjgsMTYuMDMgMCw0Ny40NSA4LjYsNDcuNDUgMTAuMTYsNDcuNDUgMTguNzEsNDcuNDUgNDcuMDMsNy41NyAiLz4gPHBvbHlnb24gY2xhc3M9InN0MCIgcG9pbnRzPSI3Ljk5LDcuNTcgMCwxOC44NyAwLDMzLjIzIDE4LjEzLDcuNTcgIi8+IDxwb2x5Z29uIGNsYXNzPSJzdDIiIHBvaW50cz0iMS4zOSwxOS4zMSA4LjcxLDguOTYgMTUuNDQsOC45NiAxLjM5LDI4Ljc3ICIvPiA8cG9seWdvbiBjbGFzcz0ic3QyIiBwb2ludHM9IjIuNjksNDYuMDYgMjMsMTcuNDIgMjkuNzUsMTcuNDIgOS40NCw0Ni4wNiAiLz4gPHBvbHlnb24gY2xhc3M9InN0MiIgcG9pbnRzPSIxMS4yOSw0Ni4wNiAzNy42LDguOTYgNDQuMzQsOC45NiAxNy45OSw0Ni4wNiAiLz4gPHBvbHlnb24gY2xhc3M9InN0MyIgcG9pbnRzPSIyMy40OSwwIDAsMzMuMjMgMCw0Ny40NSAzMy42NSwwICIvPiA8cmVjdCB4PSIzNS45NiIgeT0iMjkuNDEiIGNsYXNzPSJzdDAiIHdpZHRoPSIzLjAxIiBoZWlnaHQ9IjE4LjAxIi8+IDxwb2x5Z29uIGNsYXNzPSJzdDAiIHBvaW50cz0iNDkuODEsMjkuNDEgMzkuOTYsMjkuNDEgMzkuOTYsMzIuNjggNDMuMzYsMzIuNjggNDMuMzYsNDcuNDIgNDYuMzksNDcuNDIgNDYuMzksMzIuNjggNDkuODEsMzIuNjggIi8+IDxnPiA8ZGVmcz4gPHJlY3QgaWQ9IlNWR0lEXzFfIiB3aWR0aD0iMTYyIiBoZWlnaHQ9IjQ4LjUiLz4gPC9kZWZzPiA8Y2xpcFBhdGggaWQ9IlNWR0lEXzJfIj4gPHVzZSB4bGluazpocmVmPSIjU1ZHSURfMV8iIHN0eWxlPSJvdmVyZmxvdzp2aXNpYmxlOyIvPiA8L2NsaXBQYXRoPiA8cGF0aCBjbGFzcz0ic3QxIiBkPSJNNTMuNDEsMjkuNDFsLTUuNTcsMTguMDFoMy4wM0w1Miw0My4zM2g1LjNsMS4xMSw0LjA5aDMuMDlsLTUuMjgtMTguMDFINTMuNDF6IE01Mi43MSw0MC42M2wxLjItNC4yOCBjMC4yNy0wLjkyLDAuNS0xLjg1LDAuNjktMi43N2gwLjFjMC4xOSwwLjksMC40LDEuNzQsMC42NywyLjc1bDEuMTgsNC4zSDUyLjcxeiIvPiA8cG9seWdvbiBjbGFzcz0ic3QxIiBwb2ludHM9IjY1LjIsMjkuNDEgNjIuMTksMjkuNDEgNjIuMTksNDcuNDIgNzAuOTgsNDcuNDIgNzAuOTgsNDQuMTQgNjUuMiw0NC4xNCAiLz4gPHBvbHlnb24gY2xhc3M9InN0MSIgcG9pbnRzPSI3OS4zLDM3LjAxIDc0Ljg1LDM3LjAxIDc0Ljg1LDMyLjY4IDgwLjQyLDMyLjY4IDgwLjQyLDI5LjQxIDcxLjg0LDI5LjQxIDcxLjg0LDQ3LjQyIDc0Ljg1LDQ3LjQyIDc0Ljg1LDQwLjEzIDc5LjMsNDAuMTMgIi8+IDxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik04My43NCwyOS40MWwtNS41NywxOC4wMWgzLjAzbDEuMTMtNC4wOWg1LjNsMS4xMSw0LjA5aDMuMDlsLTUuMjgtMTguMDFIODMuNzR6IE04My4wNSw0MC42M2wxLjItNC4yOCBjMC4yNy0wLjkyLDAuNS0xLjg1LDAuNjktMi43N2gwLjExYzAuMTksMC45LDAuNCwxLjc0LDAuNjcsMi43NWwxLjE4LDQuM0g4My4wNXoiLz4gPHBhdGggY2xhc3M9InN0MSIgZD0iTTEwMi4xOSwzNC45YzAtMi45Ni0xLjQxLTUuNDktNS40NC01LjQ5aC00LjQ2djE4LjAxaDN2LTcuMDhoMC45NWwzLjg5LDcuMDhoMy41N2wtNC40My03LjYxIEMxMDAuODksMzkuMjMsMTAyLjE5LDM3LjQ5LDEwMi4xOSwzNC45IE05Ni45MiwzNy41N0g5NS4zdi01LjEyaDEuNmMxLjQzLDAsMi4yMSwwLjk4LDIuMjEsMi42MSBDOTkuMSwzNi41Niw5OC4yOCwzNy41Nyw5Ni45MiwzNy41NyIvPiA8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMTI4LjIxLDI5LjQxbC01LjU3LDE4LjAxaDMuMDNsMS4xMy00LjA5aDUuM2wxLjExLDQuMDloMy4wOWwtNS4yOC0xOC4wMUgxMjguMjF6IE0xMjcuNTIsNDAuNjNsMS4yLTQuMjggYzAuMjctMC45MiwwLjUtMS44NSwwLjY5LTIuNzdoMC4xYzAuMTksMC45LDAuNCwxLjc0LDAuNjcsMi43NWwxLjE4LDQuM0gxMjcuNTJ6Ii8+IDxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0xNDEuNjMsNDQuNzhjLTIuMjksMC0zLjgzLTIuOTMtMy44My02LjM5YzAtMy43NSwxLjU4LTYuMzQsMy43OS02LjM0YzEuNjksMCwyLjgyLDEuNDgsMy4xNSwzLjEyaDIuODIgYy0wLjQ0LTMuMDEtMi40Ny02LjM0LTUuOTUtNi4zNGMtMy43NiwwLTYuNDksNC4wNC02LjQ5LDkuNTNjMCw1LjQ5LDIuNTYsOS42NCw2LjQzLDkuNjRjMy40MywwLDUuNDQtMi45OCw2LjIzLTYuNjNoLTIuOTEgQzE0NC40OSw0My4xMSwxNDMuNDYsNDQuNzgsMTQxLjYzLDQ0Ljc4Ii8+IDxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0xNTQuODIsMjguODNjLTMuOTgsMC02Ljg1LDQuNDYtNi44NSw5LjU5YzAsNC40NCwyLjExLDkuNTksNi44Myw5LjU5YzMuOSwwLDYuODEtNC4zMyw2LjgxLTkuNTkgQzE2MS42MSwzMy40LDE1OS4wNiwyOC44MywxNTQuODIsMjguODMgTTE1NC43OCw0NC42MmMtMi4zLDAtNC4wNi0yLjY3LTQuMDYtNi4yMXMxLjc3LTYuMjEsNC4wOC02LjIxYzIuNDUsMCw0LjA2LDIuNzUsNC4wNiw2LjIxIEMxNTguODUsNDEuOTUsMTU3LjEsNDQuNjIsMTU0Ljc4LDQ0LjYyIi8+IDxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0xMTUuMjIsMjkuMzhsLTEuNjQsOS41NmMtMC4yNSwxLjM1LTAuMzYsMi40Ni0wLjQ4LDMuNzVoLTAuMDhjLTAuMDgtMS4yOS0wLjIzLTIuNDgtMC40Ni0zLjgzbC0xLjcyLTkuNDggaC0zLjI0bC0zLjQ3LDE4LjAxaDIuOTJsMS42Ni05Ljc3YzAuMTctMS4wMywwLjM0LTIuMTksMC40Ni0zLjQzaDAuMDhjMC4xNSwxLjA4LDAuMjMsMS45NiwwLjUzLDMuNDZsMS44Myw5Ljc1aDIuODRsMS43LTkuNTYgYzAuMjEtMS4xOSwwLjQyLTIuNTEsMC41Ny0zLjY1aDAuMDhjMC4xMywwLjk1LDAuMTksMS42NiwwLjUzLDMuNDFsMS43OSw5LjhoMi45OGwtMy42OC0xOC4wMUgxMTUuMjJ6Ii8+IDwvZz4gPC9zdmc+IA==">
+  <!-- Logo oficial de Italfarmaco (el mismo del vídeo de cierre v3.7), sobre tarjeta blanca. -->
+  <img id="logo" alt="Italfarmaco" src="logos/italfarmaco.png">
+  <div id="nav"><button id="bprev" aria-label="Anterior">‹</button><button id="bnext" aria-label="Siguiente">›</button></div>
+  <div id="hint">Toca para avanzar · arrastra para girar · pellizca para acercar · toca un nodo para ver su ficha</div>
   <div id="fps"></div>
   <div id="progress"></div>
 </div>
@@ -73,28 +119,29 @@
 <script>
 /* ============================================================
    DATOS · aquí se editan textos, fotos y afinidades.
-   FOTOS: carpeta "fotos" junto a este HTML, con el nombre indicado
-   en "foto" + .jpg (también vale .png, .jpeg o .webp).
-   Si falta la foto, se muestran las iniciales.
+   IMÁGENES: "foto" es la ruta relativa a este HTML (fotos/ para
+   retratos, logos/ para logotipos; 600×600, ya recortadas en círculo
+   seguro). Proceden de la presentación del cliente y del vídeo v3.7.
+   Si falta la imagen, se muestran las iniciales.
    ============================================================ */
 const PEOPLE = [
-  { id:'ont',     foto:'01-ont',        ini:'ONT', name:'ONT',                      sub:'Organización Nacional de Trasplantes',
+  { id:'ont',     foto:'logos/01-ont.jpg',        ini:'ONT', name:'ONT',                      sub:'Organización Nacional de Trasplantes',
     full:'Organización Nacional de Trasplantes', field:'El modelo español de donación y trasplantes.' },
-  { id:'quibim',  foto:'02-quibim',     ini:'Q',   name:'QUIBIM',                   sub:'IA en imagen médica',
+  { id:'quibim',  foto:'logos/02-quibim.jpg',     ini:'Q',   name:'QUIBIM',                   sub:'IA en imagen médica',
     full:'QUIBIM', field:'Inteligencia artificial aplicada a la imagen médica y a los biomarcadores de imagen.' },
-  { id:'oms',     foto:'03-oms-europa', ini:'OMS', name:'OMS Europa',               sub:'Programa Europeo de Trabajo',
+  { id:'oms',     foto:'logos/03-oms-europa.jpg', ini:'OMS', name:'OMS Europa',               sub:'Programa Europeo de Trabajo',
     full:'OMS Europa', field:'Salud pública a escala europea a través de su Programa Europeo de Trabajo.' },
-  { id:'mercuri', foto:'04-mercuri',    ini:'EM',  name:'Prof. Eugenio Mercuri',    sub:'Policlinico Gemelli · Roma',
+  { id:'mercuri', foto:'fotos/04-mercuri.jpg',    ini:'EM',  name:'Prof. Eugenio Mercuri',    sub:'Policlinico Gemelli · Roma',
     full:'Prof. Eugenio Mercuri', field:'Distrofia muscular de Duchenne y terapias avanzadas, desde el Policlinico Gemelli de Roma.' },
-  { id:'hnp',     foto:'05-hnp-toledo', ini:'HNP', name:'H. N. de Parapléjicos',    sub:'Toledo · SESCAM',
+  { id:'hnp',     foto:'logos/05-hnp-toledo.jpg', ini:'HNP', name:'H. N. de Parapléjicos',    sub:'Toledo · SESCAM',
     full:'Hospital Nacional de Parapléjicos de Toledo', field:'Rehabilitación neurológica y atención a la lesión medular.' },
-  { id:'maiques', foto:'06-neuroelectrics', ini:'NE', name:'Neuroelectrics', sub:'Recoge: Ana Maiques',
+  { id:'maiques', foto:'fotos/06-maiques.jpg', ini:'NE', name:'Neuroelectrics', sub:'Recoge: Ana Maiques',
     full:'Neuroelectrics', field:'Neuromodulación no invasiva y monitorización cerebral.<br>Recoge el premio: Ana Maiques.' },
-  { id:'onega', foto:'07-65ymas', ini:'65+', name:'65ymás', sub:'Longevidad saludable',
+  { id:'onega', foto:'logos/07-65ymas.jpg', ini:'65+', name:'65ymás', sub:'Longevidad saludable',
     full:'65ymás', field:'Por su proyecto de longevidad saludable: el medio digital para mayores de 65 años, presidido por Fernando Ónega.' },
-  { id:'vinuesa', foto:'08-vinuesa',    ini:'CV',  name:'Carola García de Vinuesa', sub:'Francis Crick Institute',
+  { id:'vinuesa', foto:'fotos/08-vinuesa.jpg',    ini:'CV',  name:'Carola García de Vinuesa', sub:'Francis Crick Institute',
     full:'Carola García de Vinuesa', field:'Genética de las enfermedades autoinmunes, desde el Francis Crick Institute.' },
-  { id:'pastor',  foto:'09-pastor',     ini:'AP',  name:'Ana Pastor Julián',        sub:'Premio honorífico',
+  { id:'pastor',  foto:'fotos/09-pastor.jpg',     ini:'AP',  name:'Ana Pastor Julián',        sub:'Premio honorífico',
     full:'Ana Pastor Julián', field:'Médica y exministra de Sanidad. Una trayectoria al servicio de las instituciones.' },
 ];
 
@@ -117,15 +164,31 @@ const THEMES = [
 /* ============================================================
    ESCENA 3D
    ============================================================ */
-const W = 1920, H = 1080, FOCAL = 1100, NODE_R = 85;
+const FOCAL = 1100, NODE_R = 85;
+let W = 1920, H = 1080, MOB = false, PORT = false, SC = 1, UI = 1, DPR = 1, NST = 1400, NDU = 420;
 const stage = document.getElementById('stage');
 const cv = document.getElementById('gl'), g = cv.getContext('2d');
 const panelBox = document.getElementById('panel'), panel = panelBox.querySelector('.inner');
 const legend = document.getElementById('legend');
-const LOGO = document.getElementById('logo').src;
+const LOGO = 'logos/italfarmaco.png';
 
-function fit() { const s = Math.min(innerWidth / W, innerHeight / H); stage.style.transform = `translate(-50%,-50%) scale(${s})`; }
-addEventListener('resize', fit); fit();
+// Escritorio/proyector: escenario fijo 1920×1080 escalado. Móvil o ventana estrecha/vertical:
+// el lienzo ocupa la ventana, con pixelRatio limitado y menos partículas.
+function layout() {
+  const vw = innerWidth, vh = innerHeight;
+  MOB = vw < 1000 || vh < 600 || vh > vw * 1.05; PORT = MOB && vh >= vw;
+  document.body.classList.toggle('m', MOB); document.body.classList.toggle('port', PORT); document.body.classList.toggle('land', MOB && !PORT);
+  if (!MOB) {
+    W = 1920; H = 1080; SC = 1; UI = 1; DPR = 1; NST = 1400; NDU = 420;
+    const s = Math.min(vw / W, vh / H); stage.style.transform = `translate(-50%,-50%) scale(${s})`;
+  } else {
+    W = vw; H = vh; DPR = Math.min(window.devicePixelRatio || 1, 1.75); NST = 500; NDU = 140;
+    SC = PORT ? Math.min(W / 720, H * .55 / 560) : Math.min(W * .56 / 720, H / 560);
+    UI = Math.max(.55, Math.min(.85, Math.min(W, H) / 640));
+  }
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+}
+layout();
 
 const v3 = (x, y, z) => ({ x, y, z });
 const add = (a, b) => v3(a.x + b.x, a.y + b.y, a.z + b.z);
@@ -144,22 +207,16 @@ const nodes = PEOPLE.map((p, i) => {
   const a = i * 2 * Math.PI / PEOPLE.length;
   const n = { ...p, i, pos: v3(620 * Math.sin(a), HEIGHTS[i], 620 * Math.cos(a)),
     a: .14, s: .6, glow: 0, img: null, tilt: .35 + (i % 3) * .35, spin: .5 + (i % 4) * .12, dots: {} };
-  loadPhoto(n, 'fotos/' + p.foto, ['jpg', 'png', 'jpeg', 'webp']);
+  loadPhoto(n, p.foto);
   return n;
 });
 const byId = Object.fromEntries(nodes.map(n => [n.id, n]));
 const ORIGIN = v3(0, 0, 0);
 
-function loadPhoto(n, base, exts) {
-  let k = 0;
-  const tryNext = () => {
-    if (k >= exts.length) return;
-    const im = new Image();
-    im.onload = () => { n.img = im; };
-    im.onerror = tryNext;
-    im.src = base + '.' + exts[k++];
-  };
-  tryNext();
+function loadPhoto(n, src) {
+  const im = new Image();
+  im.onload = () => { n.img = im; };
+  im.src = src;
 }
 
 // Arcos 3D (curvas de Bézier cuadráticas precalculadas)
@@ -195,21 +252,22 @@ const dust = Array.from({ length: 420 }, () => ({ p: v3((Math.random() - .5) * 2
 /* ============================================================
    CÁMARA (órbita alrededor de un objetivo)
    ============================================================ */
-const cam = { tx: 0, ty: 0, tz: 0, yaw: 0, pitch: .3, dist: 2100, cy: 540, net: .3 };
+const cam = { tx: 0, ty: 0, tz: 0, yaw: 0, pitch: .3, dist: 2100, cx: .5, cy: .5, net: .3 };
+const user = { yaw: 0, pitch: 0, zoom: 1 }; // gestos táctiles / arrastre
 const goal = { ...cam, spin: .06 };
-let CY_ = 540, sy, cyw, sp, cp;
+let CY_ = 540, CX_ = 960, DIST_ = 2100, sy, cyw, sp, cp;
 function setupCam(t) {
-  const yaw = cam.yaw + .05 * Math.sin(t * .37), pitch = cam.pitch + .03 * Math.sin(t * .29);
-  sy = Math.sin(yaw); cyw = Math.cos(yaw); sp = Math.sin(pitch); cp = Math.cos(pitch); CY_ = cam.cy;
+  const yaw = cam.yaw + user.yaw + .05 * Math.sin(t * .37), pitch = clamp(cam.pitch + user.pitch, -1.2, 1.3) + .03 * Math.sin(t * .29);
+  sy = Math.sin(yaw); cyw = Math.cos(yaw); sp = Math.sin(pitch); cp = Math.cos(pitch); CY_ = cam.cy * H; CX_ = cam.cx * W; DIST_ = cam.dist * user.zoom;
 }
 function proj(p) {
   const dx = p.x - cam.tx, dy = p.y - cam.ty, dz = p.z - cam.tz;
   const x1 = dx * cyw - dz * sy, z1 = dx * sy + dz * cyw;
   const y2 = dy * cp - z1 * sp, z2 = dy * sp + z1 * cp;
-  const d = cam.dist - z2;
+  const d = DIST_ - z2;
   if (d < 30) return null;
-  const k = FOCAL / d;
-  return { x: 960 + x1 * k, y: CY_ - y2 * k, k, d };
+  const k = FOCAL * SC / d;
+  return { x: CX_ + x1 * k, y: CY_ - y2 * k, k, d };
 }
 function facing(p, maxPitch = .45) { return { yaw: Math.atan2(p.x, p.z), pitch: clamp(Math.atan2(p.y, Math.hypot(p.x, p.z)), -maxPitch, maxPitch) }; }
 const angDiff = (a, b) => { let d = (a - b) % (2 * Math.PI); if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; return d; };
@@ -259,28 +317,31 @@ function render(i, instant) {
   });
 
   // Cámara
-  goal.spin = 0;
+  goal.spin = 0; goal.cx = .5;
+  user.reset = true;
   if (st.kind === 'person') {
     const n = byId[st.id], f = facing(n.pos);
-    Object.assign(goal, { tx: n.pos.x * .55, ty: n.pos.y * .55, tz: n.pos.z * .55, yaw: f.yaw, pitch: f.pitch * .8 + .08, dist: 1080, cy: 430, net: 1 });
+    Object.assign(goal, { tx: n.pos.x * .55, ty: n.pos.y * .55, tz: n.pos.z * .55, yaw: f.yaw, pitch: f.pitch * .8 + .08, dist: 1080, cy: .398, net: 1 });
   } else if (st.kind === 'theme') {
     const ms = activeTheme.members.map(id => byId[id].pos);
     const c = mul(ms.reduce(add, v3(0, 0, 0)), 1 / ms.length);
     const f = len(c) > 60 ? facing(c, .35) : { yaw: cam.yaw, pitch: .25 };
-    Object.assign(goal, { tx: c.x * .35, ty: c.y * .35, tz: c.z * .35, yaw: f.yaw, pitch: f.pitch * .6 + .18, dist: 1800, cy: 420, net: 1, spin: .025 });
+    Object.assign(goal, { tx: c.x * .35, ty: c.y * .35, tz: c.z * .35, yaw: f.yaw, pitch: f.pitch * .6 + .18, dist: 1800, cy: .389, net: 1, spin: .025 });
   } else if (st.kind === 'final') {
-    Object.assign(goal, { tx: 0, ty: 0, tz: 0, pitch: .32, dist: 1850, cy: 410, net: 1, spin: .16 });
+    Object.assign(goal, { tx: 0, ty: 0, tz: 0, pitch: .32, dist: 1850, cy: .38, net: 1, spin: .16 });
   } else if (st.kind === 'how' || st.kind === 'close') {
-    Object.assign(goal, { tx: 0, ty: 0, tz: 0, pitch: .38, dist: 2300, cy: 540, net: .42, spin: .12 });
+    Object.assign(goal, { tx: 0, ty: 0, tz: 0, pitch: .38, dist: 2300, cy: .5, net: .42, spin: .12 });
   } else if (st.kind === 'question') {
-    Object.assign(goal, { tx: 0, ty: 0, tz: 0, pitch: .45, dist: 2050, cy: 540, net: .55, spin: .08 });
+    Object.assign(goal, { tx: 0, ty: 0, tz: 0, pitch: .45, dist: 2050, cy: .5, net: .55, spin: .08 });
   } else {
-    Object.assign(goal, { tx: 0, ty: 0, tz: 0, pitch: st.kind === 'title' ? .22 : .35, dist: st.kind === 'title' ? 2500 : 2200, cy: 540, net: .5, spin: .06 });
+    Object.assign(goal, { tx: 0, ty: 0, tz: 0, pitch: st.kind === 'title' ? .22 : .35, dist: st.kind === 'title' ? 2500 : 2200, cy: .5, net: .5, spin: .06 });
   }
+  if (MOB && st.kind !== 'person') goal.dist *= PORT ? 1.35 : 1.22;
+  if (MOB) { if (!centerPanel) { if (PORT) goal.cy = .3; else { goal.cx = .3; goal.cy = .5; } } else goal.cy = .5; }
   if (goal.spin === 0) goal.yaw = cam.yaw + angDiff(goal.yaw, cam.yaw);
 
   if (instant) {
-    Object.assign(cam, { tx: goal.tx, ty: goal.ty, tz: goal.tz, yaw: goal.yaw, pitch: goal.pitch, dist: goal.dist, cy: goal.cy, net: goal.net });
+    Object.assign(cam, { tx: goal.tx, ty: goal.ty, tz: goal.tz, yaw: goal.yaw, pitch: goal.pitch, dist: goal.dist, cx: goal.cx, cy: goal.cy, net: goal.net });
     nodes.forEach(n => { n.a = n.goalA; n.s = n.goalS; n.glow = n.goalGlow; n.themes.forEach(t => n.dots[t.id] = 1); });
     edges.forEach(e => { e.prog = e.goal; e.alpha = e.goalA; });
     stage.classList.add('no-anim'); setTimeout(() => stage.classList.remove('no-anim'), 60);
@@ -291,6 +352,7 @@ function render(i, instant) {
   document.getElementById('note').classList.toggle('in', st.kind === 'theme' || finalOn || st.kind === 'question');
   panelBox.className = centerPanel ? 'center' : 'bottom';
   document.getElementById('logo').classList.toggle('off', st.kind === 'close');
+  if (cur > 0) document.getElementById('hint').classList.add('hide');
   clearTimeout(panelTimer);
   panel.classList.remove('show');
   const html = panelHTML(st);
@@ -322,12 +384,12 @@ function panelHTML(st) {
       return `<div class="kicker">Afinidad ${THEMES.indexOf(t) + 1} de ${THEMES.length}</div>
         <div class="title md"><span class="chip" style="background:${t.color};color:${t.color}"></span>${t.name}</div>
         <div class="lead">${t.text}</div>
-        <div class="small">${names.join(' · ')}</div>`;
+        <div class="small">${names.join(' · ')}</div><div class="small m-only">Afinidades temáticas, no colaboraciones entre los premiados.</div>`;
     }
     case 'final': return `<div class="kicker">Los nueve, conectados · Lo que les une</div>
       <div class="title">Son todos Imparables</div>
       <div class="lead">Caminos distintos que avanzan en la misma dirección: las personas.</div>
-      <div class="small">Liderazgo y transformación en sanidad</div>`;
+      <div class="small">Liderazgo y transformación en sanidad</div><div class="small m-only">Afinidades temáticas, no colaboraciones entre los premiados.</div>`;
     case 'how': return `<div class="kicker">Cómo se ha hecho</div>
       <div class="title md">Una red tejida con IA</div>
       <div class="lead">Con ayuda de una inteligencia artificial, analizamos los ámbitos de trabajo de cada premiado y propusimos los temas que comparten. Después, los revisamos uno a uno.</div>
@@ -378,11 +440,11 @@ function drawSphere(n, P, r, alpha, t) {
 
 function drawLabel(n, P, r, alpha) {
   const big = n.id === focusId;
-  const fs = clamp(r * .36, 19, 38) * (big ? 1.05 : 1);
+  const fs = clamp(r * .36, 19 * UI, 38 * UI) * (big ? 1.05 : 1);
   g.save(); g.globalAlpha = alpha; g.textAlign = 'center'; g.textBaseline = 'top';
-  g.lineJoin = 'round'; g.strokeStyle = 'rgba(0,17,31,.92)'; g.lineWidth = 6;
+  g.lineJoin = 'round'; g.strokeStyle = 'rgba(0,17,31,.92)'; g.lineWidth = 6 * UI;
   g.font = `700 ${fs}px Segoe UI, Arial, sans-serif`;
-  const y = P.y + r + 12;
+  const y = P.y + r + 12 * UI;
   g.strokeText(n.name, P.x, y); g.fillStyle = '#fff'; g.fillText(n.name, P.x, y);
   g.font = `400 ${fs * .72}px Segoe UI, Arial, sans-serif`;
   g.strokeText(n.sub, P.x, y + fs * 1.18); g.fillStyle = '#B0DFDB'; g.fillText(n.sub, P.x, y + fs * 1.18);
@@ -405,7 +467,7 @@ function frame(now) {
   // cámara suave
   if (goal.spin) goal.yaw += goal.spin * dt;
   const kc = 1 - Math.exp(-dt * 1.9);
-  for (const key of ['tx', 'ty', 'tz', 'pitch', 'dist', 'cy', 'net']) cam[key] += (goal[key] - cam[key]) * kc;
+  for (const key of ['tx', 'ty', 'tz', 'pitch', 'dist', 'cx', 'cy', 'net']) cam[key] += (goal[key] - cam[key]) * kc;
   cam.yaw += angDiff(goal.yaw, cam.yaw) * kc;
   setupCam(t);
 
@@ -415,17 +477,19 @@ function frame(now) {
     for (const th of THEMES) { const want = n.themes.includes(th) ? 1 : 0; n.dots[th.id] = (n.dots[th.id] || 0) + (want - (n.dots[th.id] || 0)) * kn; }
   });
 
+  if (user.reset && !drag) { const ku = 1 - Math.exp(-dt * 2.2); user.yaw -= user.yaw * ku; user.pitch -= user.pitch * ku; user.zoom += (1 - user.zoom) * ku; }
+  g.setTransform(DPR, 0, 0, DPR, 0, 0);
   g.clearRect(0, 0, W, H);
   g.globalCompositeOperation = 'lighter';
 
   // estrellas
-  for (const s of stars) {
+  for (let si = 0; si < NST; si++) { const s = stars[si];
     const P = proj(s.p); if (!P || P.x < -5 || P.x > W + 5 || P.y < -5 || P.y > H + 5) continue;
     const a = (.35 + .45 * s.b) * (.6 + .4 * Math.sin(t * 1.4 + s.tw));
     g.fillStyle = `rgba(${s.c},${a})`; const z = .8 + s.b * 1.6; g.fillRect(P.x, P.y, z, z);
   }
   // polvo cercano (paralaje)
-  for (const d of dust) {
+  for (let di = 0; di < NDU; di++) { const d = dust[di];
     d.p.y += d.v * dt; if (d.p.y > 800) d.p.y = -800;
     const P = proj(d.p); if (!P || P.x < 0 || P.x > W || P.y < 0 || P.y > H) continue;
     const r = clamp(P.k * 2.2, .5, 5);
@@ -492,8 +556,9 @@ function frame(now) {
     if (it.kind === 'dot') { g.globalCompositeOperation = 'lighter'; drawDot(it.col, it.P, clamp(9 * it.P.k, 3, 13) * it.v, it.v * it.a * fog * net); g.globalCompositeOperation = 'source-over'; continue; }
     const n = it.n, r = NODE_R * it.P.k * n.s;
     // atenuar nodos secundarios que suben a la franja de la cabecera
-    const top = n.glow > .3 ? 1 : clamp((it.P.y - r - 20) / 140, .25, 1);
+    const top = n.glow > .3 ? 1 : clamp((it.P.y - r - 20 * UI) / (140 * UI), .25, 1);
     const a = n.a * fog * (net * .7 + .3) * top;
+    n.P = it.P; n.r = r; n.vis = a;
     drawSphere(n, it.P, r, a, t);
     drawLabel(n, it.P, r, clamp(a * (net > .7 ? 1 : .5), 0, 1));
   }
@@ -521,7 +586,51 @@ addEventListener('keydown', e => {
     else auto = setInterval(() => { if (cur >= S.length - 1) { clearInterval(auto); auto = null; } else next(); }, 10000);
   }
 });
-addEventListener('click', next);
+// Ratón y táctil: clic/toque avanza; arrastrar gira; pellizcar acerca; tocar un nodo (táctil) abre su ficha.
+const ptrs = new Map(); let drag = false, pinch0 = 0, zoom0 = 1, down = null;
+const toStage = (e) => { const b = stage.getBoundingClientRect(); return { x: (e.clientX - b.left) * W / b.width, y: (e.clientY - b.top) * H / b.height }; };
+function hitNode(q) {
+  let best = null, bd = 1e9;
+  for (const n of nodes) { if (!n.P || n.vis < .2) continue; const d = Math.hypot(q.x - n.P.x, q.y - n.P.y); if (d < Math.max(n.r * 1.15, 24) && d < bd) { bd = d; best = n; } }
+  return best;
+}
+addEventListener('pointerdown', e => {
+  if (e.target.closest && e.target.closest('#nav')) return;
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (ptrs.size === 1) down = { x: e.clientX, y: e.clientY, t: performance.now(), type: e.pointerType, moved: false };
+  else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); zoom0 = user.zoom; if (down) down.moved = true; }
+});
+addEventListener('pointermove', e => {
+  const prevP = ptrs.get(e.pointerId); if (!prevP) return;
+  const cur2 = { x: e.clientX, y: e.clientY }; ptrs.set(e.pointerId, cur2);
+  if (ptrs.size === 2) {
+    const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (pinch0 > 0) user.zoom = clamp(zoom0 * pinch0 / d, .45, 1.9);
+    drag = true; user.reset = false; return;
+  }
+  if (down && !down.moved && Math.hypot(cur2.x - down.x, cur2.y - down.y) > 9) down.moved = true;
+  if (down && down.moved) {
+    drag = true; user.reset = false;
+    user.yaw -= (cur2.x - prevP.x) * .006; user.pitch = clamp(user.pitch + (cur2.y - prevP.y) * .004, -.9, .9);
+  }
+});
+function ptrEnd(e) {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.delete(e.pointerId);
+  if (ptrs.size === 0) {
+    if (down && !down.moved && e.type === 'pointerup' && performance.now() - down.t < 600) {
+      const n = down.type !== 'mouse' ? hitNode(toStage(e)) : null;
+      if (n) render(S.findIndex(s => s.kind === 'person' && s.id === n.id)); else next();
+      document.getElementById('hint').classList.add('hide');
+    }
+    drag = false; down = null; pinch0 = 0;
+  } else if (ptrs.size === 1) { pinch0 = 0; }
+}
+addEventListener('pointerup', ptrEnd); addEventListener('pointercancel', ptrEnd);
+addEventListener('wheel', e => { e.preventDefault(); user.reset = false; user.zoom = clamp(user.zoom * Math.exp(e.deltaY * .001), .45, 1.9); }, { passive: false });
+document.getElementById('bnext').addEventListener('click', e => { e.stopPropagation(); next(); });
+document.getElementById('bprev').addEventListener('click', e => { e.stopPropagation(); prev(); });
+addEventListener('resize', () => { layout(); render(cur, true); });
 let idleT;
 addEventListener('mousemove', () => { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => document.body.classList.add('idle'), 2000); });
 

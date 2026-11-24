@@ -102,28 +102,27 @@
 <script>
 /* ============================================================
    DATOS · aquí se editan textos, fotos y afinidades.
-   FOTOS: carpeta "fotos" junto a este HTML, con el nombre indicado
-   en "foto" + .jpg (también vale .png, .jpeg o .webp).
-   Si falta la foto, se muestran las iniciales.
+   IMÁGENES: "foto" es la ruta relativa a este HTML (fotos/ o logos/).
+   Si falta la imagen, se muestran las iniciales.
    ============================================================ */
 const PEOPLE = [
-  { id:'ont',     foto:'01-ont',        ini:'ONT', name:'ONT',                        sub:'Organización Nacional de Trasplantes',
+  { id:'ont',     foto:'logos/01-ont.jpg',        ini:'ONT', name:'ONT',                        sub:'Organización Nacional de Trasplantes',
     full:'Organización Nacional de Trasplantes', field:'El modelo español de donación y trasplantes.' },
-  { id:'quibim',  foto:'02-quibim',     ini:'Q',   name:'QUIBIM',                     sub:'IA en imagen médica',
+  { id:'quibim',  foto:'logos/02-quibim.jpg',     ini:'Q',   name:'QUIBIM',                     sub:'IA en imagen médica',
     full:'QUIBIM', field:'Inteligencia artificial aplicada a la imagen médica y a los biomarcadores de imagen.' },
-  { id:'oms',     foto:'03-oms-europa', ini:'OMS', name:'OMS Europa',                 sub:'Programa Europeo de Trabajo',
+  { id:'oms',     foto:'logos/03-oms-europa.jpg', ini:'OMS', name:'OMS Europa',                 sub:'Programa Europeo de Trabajo',
     full:'OMS Europa', field:'Salud pública a escala europea a través de su Programa Europeo de Trabajo.' },
-  { id:'mercuri', foto:'04-mercuri',    ini:'EM',  name:'Prof. Eugenio Mercuri',      sub:'Policlinico Gemelli · Roma',
+  { id:'mercuri', foto:'fotos/04-mercuri.jpg',    ini:'EM',  name:'Prof. Eugenio Mercuri',      sub:'Policlinico Gemelli · Roma',
     full:'Prof. Eugenio Mercuri', field:'Distrofia muscular de Duchenne y terapias avanzadas, desde el Policlinico Gemelli de Roma.' },
-  { id:'hnp',     foto:'05-hnp-toledo', ini:'HNP', name:'H. N. de Parapléjicos', sub:'Toledo · SESCAM',
+  { id:'hnp',     foto:'logos/05-hnp-toledo.jpg', ini:'HNP', name:'H. N. de Parapléjicos', sub:'Toledo · SESCAM',
     full:'Hospital Nacional de Parapléjicos de Toledo', field:'Rehabilitación neurológica y atención a la lesión medular.' },
-  { id:'maiques', foto:'06-neuroelectrics', ini:'NE', name:'Neuroelectrics', sub:'Recoge: Ana Maiques',
+  { id:'maiques', foto:'fotos/06-maiques.jpg', ini:'NE', name:'Neuroelectrics', sub:'Recoge: Ana Maiques',
     full:'Neuroelectrics', field:'Neuromodulación no invasiva y monitorización cerebral.<br>Recoge el premio: Ana Maiques.' },
-  { id:'onega', foto:'07-65ymas', ini:'65+', name:'65ymás', sub:'Longevidad saludable',
+  { id:'onega', foto:'logos/07-65ymas.jpg', ini:'65+', name:'65ymás', sub:'Longevidad saludable',
     full:'65ymás', field:'Por su proyecto de longevidad saludable: el medio digital para mayores de 65 años, presidido por Fernando Ónega.' },
-  { id:'vinuesa', foto:'08-vinuesa',    ini:'CV',  name:'Carola García de Vinuesa',   sub:'Francis Crick Institute',
+  { id:'vinuesa', foto:'fotos/08-vinuesa.jpg',    ini:'CV',  name:'Carola García de Vinuesa',   sub:'Francis Crick Institute',
     full:'Carola García de Vinuesa', field:'Genética de las enfermedades autoinmunes, desde el Francis Crick Institute.' },
-  { id:'pastor',  foto:'09-pastor',     ini:'AP',  name:'Ana Pastor Julián',          sub:'Premio honorífico',
+  { id:'pastor',  foto:'fotos/09-pastor.jpg',     ini:'AP',  name:'Ana Pastor Julián',          sub:'Premio honorífico',
     full:'Ana Pastor Julián', field:'Médica y exministra de Sanidad. Una trayectoria al servicio de las instituciones.' },
 ];
 
@@ -171,19 +170,13 @@ PEOPLE.forEach((p, i) => {
   n.innerHTML = `<div class="avatar"><span class="ini">${p.ini}</span><img alt=""></div>
     <div class="dots"></div><div class="name">${p.name}</div><div class="sub">${p.sub}</div>`;
   nodesEl.appendChild(n);
-  loadPhoto(n.querySelector('.avatar'), 'fotos/' + p.foto, ['jpg', 'png', 'jpeg', 'webp']);
+  loadPhoto(n.querySelector('.avatar'), p.foto);
 });
 
-function loadPhoto(av, base, exts) {
+function loadPhoto(av, src) {
   const img = av.querySelector('img');
-  let k = 0;
-  const tryNext = () => {
-    if (k >= exts.length) return;
-    img.onerror = tryNext;
-    img.onload = () => av.classList.add('has-photo');
-    img.src = base + '.' + exts[k++];
-  };
-  tryNext();
+  img.onload = () => av.classList.add('has-photo');
+  img.src = src;
 }
 
 // Conexiones
