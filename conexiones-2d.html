@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Premios Imparables 2026 · Conexiones</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --gold:#f5c76b; --ink:#eaf2ff; --muted:#9fb0cc; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:100%; height:100%; background:#000; overflow:hidden; font-family:"Segoe UI", "Helvetica Neue", Arial, sans-serif; color:var(--ink); }
+  body.idle { cursor:none; }
+  #stage { position:absolute; left:50%; top:50%; width:1920px; height:1080px; transform-origin:center center;
+    background:radial-gradient(ellipse at 50% 45%, #10203f 0%, #070d1f 55%, #02040a 100%); overflow:hidden; }
+  #bg { position:absolute; inset:0; }
+  #edges { position:absolute; inset:0; overflow:visible; }
+  .no-anim, .no-anim * { transition:none !important; }
+
+  /* Edges */
+  .edge { fill:none; stroke-linecap:round; opacity:0; transition:stroke-dashoffset 1.8s cubic-bezier(.6,.05,.3,1), opacity .8s, stroke-width .8s; }
+  .edge.on { opacity:.95; stroke-width:4; filter:url(#glow); }
+  .edge.past { opacity:.28; stroke-width:2; }
+  .edge.final { opacity:.55; stroke-width:2.5; }
+  .spoke { stroke:var(--gold); }
+  .pulse { opacity:0; transition:opacity .6s; }
+
+  /* Nodes */
+  .node { position:absolute; width:330px; margin-left:-165px; margin-top:-80px; text-align:center;
+    opacity:.12; transform:scale(.6); transition:opacity 1s, transform 1s cubic-bezier(.2,1.4,.4,1), filter 1s; }
+  .node.shown { opacity:1; transform:scale(1); }
+  .node.dim { opacity:.32; filter:saturate(.3); }
+  .node.focus { transform:scale(1.18); }
+  .node.focus .avatar { box-shadow:0 0 0 4px var(--gold), 0 0 60px 10px rgba(245,199,107,.55); }
+  .avatar { position:relative; width:160px; height:160px; margin:0 auto; border-radius:50%; overflow:hidden;
+    background:radial-gradient(circle at 35% 30%, #2a4a85, #0d1a38 70%);
+    box-shadow:0 0 0 3px rgba(255,255,255,.35), 0 0 30px rgba(90,170,255,.35); transition:box-shadow .8s; }
+  .avatar img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none; background:#fff; }
+  .avatar.has-photo img { display:block; }
+  .avatar.has-photo .ini { display:none; }
+  .ini { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:46px; font-weight:700; letter-spacing:1px; color:#fff; text-shadow:0 2px 12px rgba(0,0,0,.6); }
+  .name { margin-top:12px; font-size:24px; font-weight:700; line-height:1.15; text-shadow:0 2px 10px #000; }
+  .sub { margin-top:4px; font-size:17px; color:var(--muted); line-height:1.25; text-shadow:0 2px 10px #000; }
+  .dots { position:absolute; left:50%; top:-16px; transform:translateX(-50%); display:flex; gap:7px; }
+  .dots span { width:14px; height:14px; border-radius:50%; box-shadow:0 0 10px currentColor; transform:scale(0); transition:transform .6s cubic-bezier(.2,1.6,.4,1); }
+  .dots span.in { transform:scale(1); }
+
+  /* Center panel */
+  #panel { position:absolute; left:50%; top:535px; width:840px; transform:translate(-50%,-50%); text-align:center; pointer-events:none; }
+  #panel .inner { opacity:0; transform:translateY(18px); transition:opacity .9s, transform .9s; padding:34px 44px;
+    border-radius:40px; background:radial-gradient(ellipse at center, rgba(4,9,24,.9) 0%, rgba(4,9,24,.78) 55%, rgba(4,9,24,0) 100%); }
+  #panel .inner.show { opacity:1; transform:none; }
+  .kicker { font-size:20px; letter-spacing:6px; text-transform:uppercase; color:var(--gold); }
+  .title { font-size:64px; font-weight:800; line-height:1.05; margin:14px 0; }
+  .title.xl { font-size:88px; }
+  .title.md { font-size:50px; }
+  .lead { font-size:28px; line-height:1.4; color:#d4e0f5; }
+  .small { font-size:20px; line-height:1.45; color:var(--muted); margin-top:16px; }
+  .tagline { display:inline-block; margin-top:18px; padding:8px 22px; border:1px solid rgba(245,199,107,.6); border-radius:40px; color:var(--gold); font-size:22px; letter-spacing:2px; }
+  .chip { display:inline-block; width:18px; height:18px; border-radius:50%; vertical-align:middle; margin-right:12px; box-shadow:0 0 14px currentColor; }
+
+  /* Chrome */
+  #legend { position:absolute; left:40px; bottom:26px; display:flex; flex-direction:column; gap:4px; font-size:16px; color:#c5d3ea; }
+  #legend div { opacity:0; transform:translateX(-10px); transition:opacity .8s, transform .8s; }
+  #legend div.in { opacity:1; transform:none; }
+  #legend i { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:10px; box-shadow:0 0 8px currentColor; }
+  #note { position:absolute; right:40px; bottom:30px; width:420px; font-size:16px; color:#8193b3; text-align:right; opacity:0; transition:opacity .8s; }
+  #note.in { opacity:1; }
+  #brand { position:absolute; left:40px; top:30px; font-size:18px; letter-spacing:4px; text-transform:uppercase; color:#8ea3c8; }
+  #brand b { color:var(--gold); }
+  #progress { position:absolute; left:0; bottom:0; height:4px; background:linear-gradient(90deg,#5ad1ff,var(--gold)); transition:width .6s; }
+  #help { position:absolute; right:40px; top:26px; font-size:16px; color:#8ea3c8; text-align:right; line-height:1.6; background:rgba(0,0,0,.45); padding:12px 18px; border-radius:12px; transition:opacity .5s; }
+  #help.hide { opacity:0; }
+  #help kbd { border:1px solid #556; border-radius:4px; padding:0 6px; color:#dde; font-family:inherit; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="bg" width="1920" height="1080"></canvas>
+  <svg id="edges" width="1920" height="1080" viewBox="0 0 1920 1080">
+    <defs>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="5" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <g id="edgeLayer"></g>
+    <g id="pulseLayer"></g>
+  </svg>
+  <div id="nodes"></div>
+  <div id="panel"><div class="inner"></div></div>
+  <div id="brand"><b>Premios Imparables</b> · V edición · 2026</div>
+  <div id="legend"></div>
+  <div id="note">Afinidades temáticas entre ámbitos de trabajo.<br>No implican colaboración entre los premiados.</div>
+  <div id="help">
+    <kbd>→</kbd> / <kbd>Espacio</kbd> avanzar · <kbd>←</kbd> volver<br>
+    <kbd>F</kbd> pantalla completa · <kbd>A</kbd> autoplay · <kbd>R</kbd> reiniciar<br>
+    <kbd>H</kbd> ocultar esta ayuda
+  </div>
+  <div id="progress"></div>
+</div>
+
+<script>
+/* ============================================================
+   DATOS · aquí se editan textos, fotos y afinidades.
+   FOTOS: carpeta "fotos" junto a este HTML, con el nombre indicado
+   en "foto" + .jpg (también vale .png, .jpeg o .webp).
+   Si falta la foto, se muestran las iniciales.
+   ============================================================ */
+const PEOPLE = [
+  { id:'ont',     foto:'01-ont',        ini:'ONT', name:'ONT',                        sub:'Organización Nacional de Trasplantes',
+    full:'Organización Nacional de Trasplantes', field:'El modelo español de donación y trasplantes.' },
+  { id:'quibim',  foto:'02-quibim',     ini:'Q',   name:'QUIBIM',                     sub:'IA en imagen médica',
+    full:'QUIBIM', field:'Inteligencia artificial aplicada a la imagen médica y a los biomarcadores de imagen.' },
+  { id:'oms',     foto:'03-oms-europa', ini:'OMS', name:'OMS Europa',                 sub:'Programa Europeo de Trabajo',
+    full:'OMS Europa', field:'Salud pública a escala europea a través de su Programa Europeo de Trabajo.' },
+  { id:'mercuri', foto:'04-mercuri',    ini:'EM',  name:'Prof. Eugenio Mercuri',      sub:'Policlinico Gemelli · Roma',
+    full:'Prof. Eugenio Mercuri', field:'Distrofia muscular de Duchenne y terapias avanzadas, desde el Policlinico Gemelli de Roma.' },
+  { id:'hnp',     foto:'05-hnp-toledo', ini:'HNP', name:'H. N. de Parapléjicos', sub:'Toledo · SESCAM',
+    full:'Hospital Nacional de Parapléjicos de Toledo', field:'Rehabilitación neurológica y atención a la lesión medular.' },
+  { id:'maiques', foto:'06-neuroelectrics', ini:'NE', name:'Neuroelectrics', sub:'Recoge: Ana Maiques',
+    full:'Neuroelectrics', field:'Neuromodulación no invasiva y monitorización cerebral.<br>Recoge el premio: Ana Maiques.' },
+  { id:'onega', foto:'07-65ymas', ini:'65+', name:'65ymás', sub:'Longevidad saludable',
+    full:'65ymás', field:'Por su proyecto de longevidad saludable: el medio digital para mayores de 65 años, presidido por Fernando Ónega.' },
+  { id:'vinuesa', foto:'08-vinuesa',    ini:'CV',  name:'Carola García de Vinuesa',   sub:'Francis Crick Institute',
+    full:'Carola García de Vinuesa', field:'Genética de las enfermedades autoinmunes, desde el Francis Crick Institute.' },
+  { id:'pastor',  foto:'09-pastor',     ini:'AP',  name:'Ana Pastor Julián',          sub:'Premio honorífico',
+    full:'Ana Pastor Julián', field:'Médica y exministra de Sanidad. Una trayectoria al servicio de las instituciones.' },
+];
+
+// Afinidades temáticas: ámbitos compartidos, NO colaboraciones reales.
+const THEMES = [
+  { id:'neuro', color:'#5ad1ff', name:'Neurociencia y sistema neuromuscular', members:['maiques','hnp','mercuri'],
+    text:'Del cerebro a la médula y al músculo: medir, estimular, rehabilitar y tratar.' },
+  { id:'gen',   color:'#c77dff', name:'Genética y medicina de precisión', members:['vinuesa','mercuri','quibim'],
+    text:'Comprender a cada paciente en detalle: genes, terapias avanzadas y biomarcadores.' },
+  { id:'tech',  color:'#3ef0b0', name:'Tecnología, datos e IA', members:['quibim','maiques','onega'],
+    text:'Algoritmos que leen imágenes médicas, tecnología que registra el cerebro y plataformas digitales que conectan a toda una generación.' },
+  { id:'pub',   color:'#ffb547', name:'Sistema público y salud pública', members:['ont','oms','hnp','pastor'],
+    text:'Instituciones y servicio público: la salud que se construye en común.' },
+  { id:'dig',   color:'#ff6b8b', name:'Dignidad y calidad de vida', members:['onega','hnp','mercuri'],
+    text:'No solo más años: mejores años. Autonomía, rehabilitación y una vida plena.' },
+  { id:'int',   color:'#7aa2ff', name:'Vocación internacional', members:['oms','ont','mercuri','vinuesa'],
+    text:'Europa, Roma, Londres, Madrid: la ciencia y la salud no entienden de fronteras.' },
+];
+
+/* ============================================================ */
+const W = 1920, H = 1080, CX = 960, CY = 535;
+const stage = document.getElementById('stage');
+const nodesEl = document.getElementById('nodes');
+const edgeLayer = document.getElementById('edgeLayer');
+const pulseLayer = document.getElementById('pulseLayer');
+const panel = document.querySelector('#panel .inner');
+const legend = document.getElementById('legend');
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+function fit() {
+  const s = Math.min(innerWidth / W, innerHeight / H);
+  stage.style.transform = `translate(-50%,-50%) scale(${s})`;
+}
+addEventListener('resize', fit); fit();
+
+// Nodos en una elipse
+// Posiciones (centro de cada foto) en el escenario de 1920x1080, en el orden de PEOPLE
+const LAYOUT = [ {x:960,y:140}, {x:1440,y:215}, {x:1740,y:470}, {x:1580,y:745}, {x:1180,y:870}, {x:740,y:870}, {x:380,y:745}, {x:180,y:470}, {x:480,y:215} ];
+const pos = {};
+PEOPLE.forEach((p, i) => {
+  pos[p.id] = LAYOUT[i];
+  const n = document.createElement('div');
+  n.className = 'node'; n.id = 'n-' + p.id;
+  n.style.left = pos[p.id].x + 'px'; n.style.top = pos[p.id].y + 'px';
+  n.innerHTML = `<div class="avatar"><span class="ini">${p.ini}</span><img alt=""></div>
+    <div class="dots"></div><div class="name">${p.name}</div><div class="sub">${p.sub}</div>`;
+  nodesEl.appendChild(n);
+  loadPhoto(n.querySelector('.avatar'), 'fotos/' + p.foto, ['jpg', 'png', 'jpeg', 'webp']);
+});
+
+function loadPhoto(av, base, exts) {
+  const img = av.querySelector('img');
+  let k = 0;
+  const tryNext = () => {
+    if (k >= exts.length) return;
+    img.onerror = tryNext;
+    img.onload = () => av.classList.add('has-photo');
+    img.src = base + '.' + exts[k++];
+  };
+  tryNext();
+}
+
+// Conexiones
+function curve(a, b) {
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+  const cx = mx + (CX - mx) * 0.32, cy = my + (CY - my) * 0.32;
+  return `M${a.x},${a.y} Q${cx},${cy} ${b.x},${b.y}`;
+}
+const edges = [];
+function addPath(d, cls, color, theme, prepend) {
+  const path = document.createElementNS(SVGNS, 'path');
+  path.setAttribute('d', d); path.setAttribute('class', cls); path.style.stroke = color;
+  prepend ? edgeLayer.insertBefore(path, edgeLayer.firstChild) : edgeLayer.appendChild(path);
+  const len = path.getTotalLength();
+  path.style.strokeDasharray = len; path.style.strokeDashoffset = len;
+  const pulses = [0, .5].map(o => {
+    const c = document.createElementNS(SVGNS, 'circle');
+    c.setAttribute('r', 5); c.setAttribute('class', 'pulse'); c.style.fill = '#fff';
+    c.style.filter = `drop-shadow(0 0 6px ${color})`;
+    pulseLayer.appendChild(c); return { c, o };
+  });
+  edges.push({ el: path, theme, len, pulses, speed: .10 + Math.random() * .08, live: false });
+}
+THEMES.forEach((t, ti) => {
+  const m = t.members, off = (ti - 2.5) * 6;
+  for (let i = 0; i < m.length; i++) for (let j = i + 1; j < m.length; j++) {
+    const a = { x: pos[m[i]].x + off, y: pos[m[i]].y + off * .5 }, b = { x: pos[m[j]].x + off, y: pos[m[j]].y + off * .5 };
+    addPath(curve(a, b), 'edge', t.color, t.id);
+  }
+});
+PEOPLE.forEach(p => addPath(`M${CX},${CY} L${pos[p.id].x},${pos[p.id].y}`, 'edge spoke', '#f5c76b', 'spoke', true));
+
+// Guion
+const S = [{ kind:'title' }, { kind:'intro' }];
+PEOPLE.forEach(p => S.push({ kind:'person', id:p.id }));
+S.push({ kind:'question' });
+THEMES.forEach(t => S.push({ kind:'theme', id:t.id }));
+S.push({ kind:'final' }, { kind:'how' }, { kind:'close' });
+
+let cur = -1, panelTimer;
+const themeById = id => THEMES.find(t => t.id === id);
+
+function render(i, instant) {
+  if (instant) stage.classList.add('no-anim');
+  cur = Math.max(0, Math.min(S.length - 1, i));
+  const st = S[cur];
+  const firstTheme = S.findIndex(s => s.kind === 'theme');
+  const finalOn = ['final', 'how', 'close'].includes(st.kind);
+  const personIdx = st.kind === 'person' ? PEOPLE.findIndex(p => p.id === st.id) : -1;
+  const allShown = cur > S.findIndex(s => s.kind === 'question') - 1;
+  const themeIdx = st.kind === 'theme' ? cur - firstTheme : -1;
+  const activeTheme = st.kind === 'theme' ? themeById(st.id) : null;
+
+  PEOPLE.forEach((p, k) => {
+    const n = document.getElementById('n-' + p.id);
+    n.classList.toggle('shown', allShown || (personIdx >= 0 && k <= personIdx));
+    n.classList.toggle('focus', personIdx === k);
+    n.classList.toggle('dim', !!activeTheme && !activeTheme.members.includes(p.id));
+    const list = THEMES.filter((t, ti) => t.members.includes(p.id) && (finalOn || (themeIdx >= 0 && ti <= themeIdx)));
+    const dots = n.querySelector('.dots');
+    const sig = list.map(t => t.id).join();
+    if (dots.dataset.sig !== sig) {
+      dots.dataset.sig = sig;
+      dots.innerHTML = list.map(t => `<span style="background:${t.color};color:${t.color}"></span>`).join('');
+      const spans = dots.querySelectorAll('span');
+      if (instant) spans.forEach(s => s.classList.add('in'));
+      else setTimeout(() => spans.forEach(s => s.classList.add('in')), 50);
+    }
+  });
+
+  edges.forEach(e => {
+    const ti = THEMES.findIndex(t => t.id === e.theme);
+    let state = 'off';
+    if (e.theme === 'spoke') state = finalOn ? 'on' : 'off';
+    else if (finalOn) state = 'final';
+    else if (themeIdx >= 0 && ti === themeIdx) state = 'on';
+    else if (themeIdx >= 0 && ti < themeIdx) state = 'past';
+    e.el.classList.toggle('on', state === 'on');
+    e.el.classList.toggle('past', state === 'past');
+    e.el.classList.toggle('final', state === 'final');
+    e.el.style.strokeDashoffset = state === 'off' ? e.len : 0;
+    e.live = state === 'on' || state === 'final';
+    e.pulses.forEach(p => p.c.style.opacity = e.live ? (state === 'on' ? 1 : .7) : 0);
+  });
+
+  legend.innerHTML = THEMES.map((t, ti) => `<div class="${(finalOn || (themeIdx >= 0 && ti <= themeIdx)) ? 'in' : ''}"><i style="background:${t.color};color:${t.color}"></i>${t.name}</div>`).join('');
+  document.getElementById('note').classList.toggle('in', st.kind === 'theme' || finalOn);
+
+  clearTimeout(panelTimer);
+  panel.classList.remove('show');
+  const html = panelHTML(st);
+  const show = () => { panel.innerHTML = html; void panel.offsetWidth; panel.classList.add('show'); };
+  if (instant) show(); else panelTimer = setTimeout(show, 400);
+
+  document.getElementById('progress').style.width = (100 * cur / (S.length - 1)) + '%';
+  history.replaceState(null, '', location.pathname + location.search + '#' + cur);
+  if (instant) { void stage.offsetWidth; setTimeout(() => stage.classList.remove('no-anim'), 50); }
+}
+
+function panelHTML(st) {
+  switch (st.kind) {
+    case 'title': return `<div class="kicker">Premios Imparables 2026</div>
+      <div class="title xl">La red de los Imparables</div>
+      <div class="lead">Nueve trayectorias. Un mismo hilo.</div>
+      <div class="tagline">Liderazgo y transformación en sanidad</div>`;
+    case 'intro': return `<div class="kicker">Nueve premiados</div>
+      <div class="title md">Nueve campos distintos</div>
+      <div class="lead">Trasplantes, inteligencia artificial, salud pública, terapias avanzadas, rehabilitación, neurotecnología, longevidad, genética y servicio público.</div>`;
+    case 'person': {
+      const p = PEOPLE.find(x => x.id === st.id), k = PEOPLE.indexOf(p) + 1;
+      return `<div class="kicker">Premiado ${k} de ${PEOPLE.length}</div>
+        <div class="title md">${p.full}</div><div class="lead">${p.field}</div>`;
+    }
+    case 'question': return `<div class="kicker">La pregunta</div>
+      <div class="title md">¿Qué los une?</div>
+      <div class="lead">Buscamos los ámbitos que comparten.<br>Cada color es una afinidad temática.</div>`;
+    case 'theme': {
+      const t = themeById(st.id), names = t.members.map(id => PEOPLE.find(p => p.id === id).name);
+      return `<div class="kicker">Afinidad ${THEMES.indexOf(t) + 1} de ${THEMES.length}</div>
+        <div class="title md"><span class="chip" style="background:${t.color};color:${t.color}"></span>${t.name}</div>
+        <div class="lead">${t.text}</div>
+        <div class="small">${names.join(' · ')}</div>`;
+    }
+    case 'final': return `<div class="kicker">Los nueve, conectados · Lo que les une</div>
+      <div class="title">Son todos Imparables</div>
+      <div class="lead">Caminos distintos que avanzan en la misma dirección:<br>las personas.</div>
+      <div class="small">Liderazgo y transformación en sanidad</div>`;
+    case 'how': return `<div class="kicker">Cómo se ha hecho</div>
+      <div class="title md">Una red tejida con IA</div>
+      <div class="lead">Con ayuda de una inteligencia artificial, analizamos los ámbitos de trabajo de cada premiado y propusimos los temas que comparten. Después, los revisamos uno a uno.</div>
+      <div class="small">La IA también ha ayudado a programar esta web. Las líneas muestran afinidades temáticas, no colaboraciones entre los premiados.</div>`;
+    case 'close': return `<div class="kicker">V edición · Premios Imparables</div>
+      <div class="title xl">Gracias</div>
+      <div class="lead">A los nueve Imparables, por conectar ciencia, tecnología y servicio público con la vida de las personas.</div>`;
+  }
+}
+
+// Fondo: estrellas + pulsos que recorren las conexiones
+const bg = document.getElementById('bg'), ctx = bg.getContext('2d');
+const stars = Array.from({ length: 260 }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.6 + .3, s: Math.random() * .25 + .03, p: Math.random() * 6.28 }));
+const t0 = performance.now();
+function frame(now) {
+  const t = (now - t0) / 1000;
+  ctx.clearRect(0, 0, W, H);
+  for (const s of stars) {
+    s.x += s.s; if (s.x > W) s.x = 0;
+    ctx.fillStyle = `rgba(190,215,255,${.35 + .35 * Math.sin(t * 1.3 + s.p)})`;
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.283); ctx.fill();
+  }
+  for (const e of edges) {
+    if (!e.live) continue;
+    for (const p of e.pulses) {
+      const pt = e.el.getPointAtLength(((t * e.speed + p.o) % 1) * e.len);
+      p.c.setAttribute('cx', pt.x); p.c.setAttribute('cy', pt.y);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// Controles
+let auto = null;
+const next = () => { if (cur < S.length - 1) render(cur + 1); };
+const prev = () => { if (cur > 0) render(cur - 1); };
+addEventListener('keydown', e => {
+  const k = e.key;
+  if (['ArrowRight', ' ', 'PageDown', 'Enter', 'ArrowDown'].includes(k)) { e.preventDefault(); next(); }
+  else if (['ArrowLeft', 'PageUp', 'Backspace', 'ArrowUp'].includes(k)) { e.preventDefault(); prev(); }
+  else if (k === 'f' || k === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+  else if (k === 'h' || k === 'H') document.getElementById('help').classList.toggle('hide');
+  else if (k === 'r' || k === 'R' || k === 'Home') render(0);
+  else if (k === 'End') render(S.length - 1);
+  else if (k === 'a' || k === 'A') {
+    if (auto) { clearInterval(auto); auto = null; }
+    else auto = setInterval(() => { if (cur >= S.length - 1) { clearInterval(auto); auto = null; } else next(); }, 10000);
+  }
+});
+addEventListener('click', next);
+let idleT;
+addEventListener('mousemove', () => { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => document.body.classList.add('idle'), 2000); });
+
+if (/nohelp/.test(location.search)) document.getElementById('help').classList.add('hide');
+const startAt = parseInt(location.hash.slice(1), 10);
+render(isNaN(startAt) ? 0 : startAt, !isNaN(startAt) && startAt > 0);
+</script>
+</body>
+</html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Premios Imparables 2026 · La red de los Imparables (3D)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Archivo autocontenido: sin librerías, sin CDN, sin internet. Motor 3D propio sobre <canvas>. -->
+<style>
+  :root { --gold:#00CC66; --ink:#F2F7FB; --muted:#A8C3D6; } /* Paleta Italfarmaco: navy #002E55/#012B4F, verde #00CC66/#0E8D38, verde claro #C5EDCD, aqua #B0DFDB, gris #7B7878 */
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:100%; height:100%; background:#000; overflow:hidden; font-family:"Segoe UI", "Helvetica Neue", Arial, sans-serif; color:var(--ink); }
+  body.idle { cursor:none; }
+  #stage { position:absolute; left:50%; top:50%; width:1920px; height:1080px; transform-origin:center center;
+    background:radial-gradient(ellipse at 50% 42%, #0B3F6E 0%, #012B4F 45%, #00111F 100%); overflow:hidden; }
+  #gl { position:absolute; inset:0; }
+  .no-anim, .no-anim * { transition:none !important; }
+
+  #panel { position:absolute; left:50%; transform:translate(-50%,-50%); text-align:center; pointer-events:none; transition:top .9s cubic-bezier(.5,0,.2,1), width .9s; }
+  #panel.center { top:540px; width:1000px; }
+  #panel.bottom { top:875px; width:1200px; }
+  #panel .inner { opacity:0; transform:translateY(18px); transition:opacity .9s, transform .9s; padding:30px 48px; border-radius:40px; }
+  #panel.center .inner { background:radial-gradient(ellipse at center, rgba(0,22,42,.9) 0%, rgba(0,22,42,.72) 55%, rgba(0,22,42,0) 100%); }
+  #panel.bottom .inner { padding:22px 44px 24px; background:linear-gradient(180deg, rgba(0,30,56,.6), rgba(0,24,46,.86)); border:1px solid rgba(0,204,102,.28); border-radius:28px; backdrop-filter:blur(2px); }
+  #panel .inner.show { opacity:1; transform:none; }
+  .kicker { font-size:20px; letter-spacing:6px; text-transform:uppercase; color:var(--gold); }
+  .title { font-size:64px; font-weight:800; line-height:1.05; margin:12px 0; }
+  .title.xl { font-size:96px; }
+  .title.md { font-size:48px; }
+  #panel.bottom .title { font-size:46px; margin:8px 0; }
+  .lead { font-size:28px; line-height:1.38; color:#DCEBF2; }
+  #panel.bottom .lead { font-size:26px; }
+  .small { font-size:20px; line-height:1.45; color:var(--muted); margin-top:12px; }
+  .tagline { display:inline-block; margin-top:18px; padding:8px 22px; border:1px solid rgba(0,204,102,.7); border-radius:40px; color:var(--gold); font-size:22px; letter-spacing:2px; }
+  .chip { display:inline-block; width:20px; height:20px; border-radius:50%; vertical-align:middle; margin-right:14px; box-shadow:0 0 16px currentColor; }
+
+  #brand { position:absolute; left:40px; top:30px; font-size:18px; letter-spacing:4px; text-transform:uppercase; color:#A8C3D6; }
+  #brand b { color:var(--gold); }
+  #legend { position:absolute; left:40px; top:74px; display:flex; flex-direction:column; gap:5px; font-size:17px; color:#C5DCE6; }
+  #legend div { opacity:0; transform:translateX(-10px); transition:opacity .8s, transform .8s; }
+  #legend div.in { opacity:1; transform:none; }
+  #legend div.cur { color:#fff; font-weight:700; }
+  #legend i { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:10px; box-shadow:0 0 8px currentColor; }
+  #note { position:absolute; right:40px; top:30px; width:600px; font-size:16px; color:#A8C3D6; text-align:right; opacity:0; transition:opacity .8s; line-height:1.45; }
+  #note.in { opacity:1; }
+  #progress { position:absolute; left:0; bottom:0; height:4px; background:linear-gradient(90deg,#0E8D38,var(--gold)); transition:width .6s; }
+  #help { position:absolute; right:40px; bottom:24px; font-size:16px; color:#A8C3D6; text-align:right; line-height:1.6; background:rgba(0,17,31,.6); padding:12px 18px; border-radius:12px; transition:opacity .5s; }
+  #help.hide { opacity:0; }
+  #help kbd { border:1px solid #556; border-radius:4px; padding:0 6px; color:#dde; font-family:inherit; }
+  #logo { position:absolute; left:40px; bottom:28px; height:46px; opacity:.9; transition:opacity .8s; }
+  #logo.off { opacity:0; }
+  .logo-lg { display:block; height:92px; margin:34px auto 0; }
+  #fps { position:absolute; left:8px; bottom:8px; font-size:12px; color:#567; display:none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="gl" width="1920" height="1080"></canvas>
+  <div id="panel" class="center"><div class="inner"></div></div>
+  <div id="brand"><b>Premios Imparables</b> · V edición · 2026</div>
+  <div id="legend"></div>
+  <div id="note">Las líneas muestran afinidades temáticas entre ámbitos de trabajo.<br>No implican colaboración entre los premiados.</div>
+  <div id="help">
+    <kbd>→</kbd> / <kbd>Espacio</kbd> / clic avanzar · <kbd>←</kbd> volver<br>
+    <kbd>F</kbd> pantalla completa · <kbd>A</kbd> autoplay · <kbd>R</kbd> reiniciar<br>
+    <kbd>H</kbd> ocultar esta ayuda
+  </div>
+  <!-- Logo oficial de Italfarmaco (fuente: https://www.italfarmaco.com/wp-content/uploads/2024/05/Italfarmaco-SpA-Logo.svg), versión en negativo incrustada para funcionar sin conexión. Copia en marca/. -->
+  <img id="logo" alt="Italfarmaco" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMTYyIDQ4LjUiPiA8c3R5bGUgdHlwZT0idGV4dC9jc3MiPiAgLnN0MHtmaWxsOiNGRkZGRkY7fSAuc3Qxe2NsaXAtcGF0aDp1cmwoI1NWR0lEXzJfKTtmaWxsOiNGRkZGRkY7fSAuc3Qye2ZpbGw6bm9uZTt9IC5zdDN7ZmlsbDojMDJDQzY2O30gIDwvc3R5bGU+ICA8cG9seWdvbiBjbGFzcz0ic3QwIiBwb2ludHM9IjM2Ljg5LDcuNTcgMzAuODgsMTYuMDMgMjIuMjgsMTYuMDMgMCw0Ny40NSA4LjYsNDcuNDUgMTAuMTYsNDcuNDUgMTguNzEsNDcuNDUgNDcuMDMsNy41NyAiLz4gPHBvbHlnb24gY2xhc3M9InN0MCIgcG9pbnRzPSI3Ljk5LDcuNTcgMCwxOC44NyAwLDMzLjIzIDE4LjEzLDcuNTcgIi8+IDxwb2x5Z29uIGNsYXNzPSJzdDIiIHBvaW50cz0iMS4zOSwxOS4zMSA4LjcxLDguOTYgMTUuNDQsOC45NiAxLjM5LDI4Ljc3ICIvPiA8cG9seWdvbiBjbGFzcz0ic3QyIiBwb2ludHM9IjIuNjksNDYuMDYgMjMsMTcuNDIgMjkuNzUsMTcuNDIgOS40NCw0Ni4wNiAiLz4gPHBvbHlnb24gY2xhc3M9InN0MiIgcG9pbnRzPSIxMS4yOSw0Ni4wNiAzNy42LDguOTYgNDQuMzQsOC45NiAxNy45OSw0Ni4wNiAiLz4gPHBvbHlnb24gY2xhc3M9InN0MyIgcG9pbnRzPSIyMy40OSwwIDAsMzMuMjMgMCw0Ny40NSAzMy42NSwwICIvPiA8cmVjdCB4PSIzNS45NiIgeT0iMjkuNDEiIGNsYXNzPSJzdDAiIHdpZHRoPSIzLjAxIiBoZWlnaHQ9IjE4LjAxIi8+IDxwb2x5Z29uIGNsYXNzPSJzdDAiIHBvaW50cz0iNDkuODEsMjkuNDEgMzkuOTYsMjkuNDEgMzkuOTYsMzIuNjggNDMuMzYsMzIuNjggNDMuMzYsNDcuNDIgNDYuMzksNDcuNDIgNDYuMzksMzIuNjggNDkuODEsMzIuNjggIi8+IDxnPiA8ZGVmcz4gPHJlY3QgaWQ9IlNWR0lEXzFfIiB3aWR0aD0iMTYyIiBoZWlnaHQ9IjQ4LjUiLz4gPC9kZWZzPiA8Y2xpcFBhdGggaWQ9IlNWR0lEXzJfIj4gPHVzZSB4bGluazpocmVmPSIjU1ZHSURfMV8iIHN0eWxlPSJvdmVyZmxvdzp2aXNpYmxlOyIvPiA8L2NsaXBQYXRoPiA8cGF0aCBjbGFzcz0ic3QxIiBkPSJNNTMuNDEsMjkuNDFsLTUuNTcsMTguMDFoMy4wM0w1Miw0My4zM2g1LjNsMS4xMSw0LjA5aDMuMDlsLTUuMjgtMTguMDFINTMuNDF6IE01Mi43MSw0MC42M2wxLjItNC4yOCBjMC4yNy0wLjkyLDAuNS0xLjg1LDAuNjktMi43N2gwLjFjMC4xOSwwLjksMC40LDEuNzQsMC42NywyLjc1bDEuMTgsNC4zSDUyLjcxeiIvPiA8cG9seWdvbiBjbGFzcz0ic3QxIiBwb2ludHM9IjY1LjIsMjkuNDEgNjIuMTksMjkuNDEgNjIuMTksNDcuNDIgNzAuOTgsNDcuNDIgNzAuOTgsNDQuMTQgNjUuMiw0NC4xNCAiLz4gPHBvbHlnb24gY2xhc3M9InN0MSIgcG9pbnRzPSI3OS4zLDM3LjAxIDc0Ljg1LDM3LjAxIDc0Ljg1LDMyLjY4IDgwLjQyLDMyLjY4IDgwLjQyLDI5LjQxIDcxLjg0LDI5LjQxIDcxLjg0LDQ3LjQyIDc0Ljg1LDQ3LjQyIDc0Ljg1LDQwLjEzIDc5LjMsNDAuMTMgIi8+IDxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik04My43NCwyOS40MWwtNS41NywxOC4wMWgzLjAzbDEuMTMtNC4wOWg1LjNsMS4xMSw0LjA5aDMuMDlsLTUuMjgtMTguMDFIODMuNzR6IE04My4wNSw0MC42M2wxLjItNC4yOCBjMC4yNy0wLjkyLDAuNS0xLjg1LDAuNjktMi43N2gwLjExYzAuMTksMC45LDAuNCwxLjc0LDAuNjcsMi43NWwxLjE4LDQuM0g4My4wNXoiLz4gPHBhdGggY2xhc3M9InN0MSIgZD0iTTEwMi4xOSwzNC45YzAtMi45Ni0xLjQxLTUuNDktNS40NC01LjQ5aC00LjQ2djE4LjAxaDN2LTcuMDhoMC45NWwzLjg5LDcuMDhoMy41N2wtNC40My03LjYxIEMxMDAuODksMzkuMjMsMTAyLjE5LDM3LjQ5LDEwMi4xOSwzNC45IE05Ni45MiwzNy41N0g5NS4zdi01LjEyaDEuNmMxLjQzLDAsMi4yMSwwLjk4LDIuMjEsMi42MSBDOTkuMSwzNi41Niw5OC4yOCwzNy41Nyw5Ni45MiwzNy41NyIvPiA8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMTI4LjIxLDI5LjQxbC01LjU3LDE4LjAxaDMuMDNsMS4xMy00LjA5aDUuM2wxLjExLDQuMDloMy4wOWwtNS4yOC0xOC4wMUgxMjguMjF6IE0xMjcuNTIsNDAuNjNsMS4yLTQuMjggYzAuMjctMC45MiwwLjUtMS44NSwwLjY5LTIuNzdoMC4xYzAuMTksMC45LDAuNCwxLjc0LDAuNjcsMi43NWwxLjE4LDQuM0gxMjcuNTJ6Ii8+IDxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0xNDEuNjMsNDQuNzhjLTIuMjksMC0zLjgzLTIuOTMtMy44My02LjM5YzAtMy43NSwxLjU4LTYuMzQsMy43OS02LjM0YzEuNjksMCwyLjgyLDEuNDgsMy4xNSwzLjEyaDIuODIgYy0wLjQ0LTMuMDEtMi40Ny02LjM0LTUuOTUtNi4zNGMtMy43NiwwLTYuNDksNC4wNC02LjQ5LDkuNTNjMCw1LjQ5LDIuNTYsOS42NCw2LjQzLDkuNjRjMy40MywwLDUuNDQtMi45OCw2LjIzLTYuNjNoLTIuOTEgQzE0NC40OSw0My4xMSwxNDMuNDYsNDQuNzgsMTQxLjYzLDQ0Ljc4Ii8+IDxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0xNTQuODIsMjguODNjLTMuOTgsMC02Ljg1LDQuNDYtNi44NSw5LjU5YzAsNC40NCwyLjExLDkuNTksNi44Myw5LjU5YzMuOSwwLDYuODEtNC4zMyw2LjgxLTkuNTkgQzE2MS42MSwzMy40LDE1OS4wNiwyOC44MywxNTQuODIsMjguODMgTTE1NC43OCw0NC42MmMtMi4zLDAtNC4wNi0yLjY3LTQuMDYtNi4yMXMxLjc3LTYuMjEsNC4wOC02LjIxYzIuNDUsMCw0LjA2LDIuNzUsNC4wNiw2LjIxIEMxNTguODUsNDEuOTUsMTU3LjEsNDQuNjIsMTU0Ljc4LDQ0LjYyIi8+IDxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0xMTUuMjIsMjkuMzhsLTEuNjQsOS41NmMtMC4yNSwxLjM1LTAuMzYsMi40Ni0wLjQ4LDMuNzVoLTAuMDhjLTAuMDgtMS4yOS0wLjIzLTIuNDgtMC40Ni0zLjgzbC0xLjcyLTkuNDggaC0zLjI0bC0zLjQ3LDE4LjAxaDIuOTJsMS42Ni05Ljc3YzAuMTctMS4wMywwLjM0LTIuMTksMC40Ni0zLjQzaDAuMDhjMC4xNSwxLjA4LDAuMjMsMS45NiwwLjUzLDMuNDZsMS44Myw5Ljc1aDIuODRsMS43LTkuNTYgYzAuMjEtMS4xOSwwLjQyLTIuNTEsMC41Ny0zLjY1aDAuMDhjMC4xMywwLjk1LDAuMTksMS42NiwwLjUzLDMuNDFsMS43OSw5LjhoMi45OGwtMy42OC0xOC4wMUgxMTUuMjJ6Ii8+IDwvZz4gPC9zdmc+IA==">
+  <div id="fps"></div>
+  <div id="progress"></div>
+</div>
+
+<script>
+/* ============================================================
+   DATOS · aquí se editan textos, fotos y afinidades.
+   FOTOS: carpeta "fotos" junto a este HTML, con el nombre indicado
+   en "foto" + .jpg (también vale .png, .jpeg o .webp).
+   Si falta la foto, se muestran las iniciales.
+   ============================================================ */
+const PEOPLE = [
+  { id:'ont',     foto:'01-ont',        ini:'ONT', name:'ONT',                      sub:'Organización Nacional de Trasplantes',
+    full:'Organización Nacional de Trasplantes', field:'El modelo español de donación y trasplantes.' },
+  { id:'quibim',  foto:'02-quibim',     ini:'Q',   name:'QUIBIM',                   sub:'IA en imagen médica',
+    full:'QUIBIM', field:'Inteligencia artificial aplicada a la imagen médica y a los biomarcadores de imagen.' },
+  { id:'oms',     foto:'03-oms-europa', ini:'OMS', name:'OMS Europa',               sub:'Programa Europeo de Trabajo',
+    full:'OMS Europa', field:'Salud pública a escala europea a través de su Programa Europeo de Trabajo.' },
+  { id:'mercuri', foto:'04-mercuri',    ini:'EM',  name:'Prof. Eugenio Mercuri',    sub:'Policlinico Gemelli · Roma',
+    full:'Prof. Eugenio Mercuri', field:'Distrofia muscular de Duchenne y terapias avanzadas, desde el Policlinico Gemelli de Roma.' },
+  { id:'hnp',     foto:'05-hnp-toledo', ini:'HNP', name:'H. N. de Parapléjicos',    sub:'Toledo · SESCAM',
+    full:'Hospital Nacional de Parapléjicos de Toledo', field:'Rehabilitación neurológica y atención a la lesión medular.' },
+  { id:'maiques', foto:'06-neuroelectrics', ini:'NE', name:'Neuroelectrics', sub:'Recoge: Ana Maiques',
+    full:'Neuroelectrics', field:'Neuromodulación no invasiva y monitorización cerebral.<br>Recoge el premio: Ana Maiques.' },
+  { id:'onega', foto:'07-65ymas', ini:'65+', name:'65ymás', sub:'Longevidad saludable',
+    full:'65ymás', field:'Por su proyecto de longevidad saludable: el medio digital para mayores de 65 años, presidido por Fernando Ónega.' },
+  { id:'vinuesa', foto:'08-vinuesa',    ini:'CV',  name:'Carola García de Vinuesa', sub:'Francis Crick Institute',
+    full:'Carola García de Vinuesa', field:'Genética de las enfermedades autoinmunes, desde el Francis Crick Institute.' },
+  { id:'pastor',  foto:'09-pastor',     ini:'AP',  name:'Ana Pastor Julián',        sub:'Premio honorífico',
+    full:'Ana Pastor Julián', field:'Médica y exministra de Sanidad. Una trayectoria al servicio de las instituciones.' },
+];
+
+// Afinidades temáticas: ámbitos compartidos, NO colaboraciones reales.
+const THEMES = [
+  { id:'neuro', color:'#3FB7E8', name:'Neurociencia y sistema neuromuscular', members:['maiques','hnp','mercuri'],
+    text:'Del cerebro a la médula y al músculo: medir, estimular, rehabilitar y tratar.' },
+  { id:'gen',   color:'#2BB3A3', name:'Genética y medicina de precisión', members:['vinuesa','mercuri','quibim'],
+    text:'Comprender a cada paciente en detalle: genes, terapias avanzadas y biomarcadores.' },
+  { id:'tech',  color:'#00CC66', name:'Tecnología, datos e IA', members:['quibim','maiques','onega'],
+    text:'Algoritmos que leen imágenes médicas, tecnología que registra el cerebro y plataformas digitales que conectan a toda una generación.' },
+  { id:'pub',   color:'#E5E5E5', name:'Sistema público y salud pública', members:['ont','oms','hnp','pastor'],
+    text:'Instituciones y servicio público: la salud que se construye en común.' },
+  { id:'dig',   color:'#B6E388', name:'Dignidad y calidad de vida', members:['onega','hnp','mercuri'],
+    text:'No solo más años: mejores años. Autonomía, rehabilitación y una vida plena.' },
+  { id:'int',   color:'#8FA8E8', name:'Vocación internacional', members:['oms','ont','mercuri','vinuesa'],
+    text:'Europa, Roma, Londres, Madrid: la ciencia y la salud no entienden de fronteras.' },
+];
+
+/* ============================================================
+   ESCENA 3D
+   ============================================================ */
+const W = 1920, H = 1080, FOCAL = 1100, NODE_R = 85;
+const stage = document.getElementById('stage');
+const cv = document.getElementById('gl'), g = cv.getContext('2d');
+const panelBox = document.getElementById('panel'), panel = panelBox.querySelector('.inner');
+const legend = document.getElementById('legend');
+const LOGO = document.getElementById('logo').src;
+
+function fit() { const s = Math.min(innerWidth / W, innerHeight / H); stage.style.transform = `translate(-50%,-50%) scale(${s})`; }
+addEventListener('resize', fit); fit();
+
+const v3 = (x, y, z) => ({ x, y, z });
+const add = (a, b) => v3(a.x + b.x, a.y + b.y, a.z + b.z);
+const sub = (a, b) => v3(a.x - b.x, a.y - b.y, a.z - b.z);
+const mul = (a, s) => v3(a.x * s, a.y * s, a.z * s);
+const len = a => Math.hypot(a.x, a.y, a.z);
+const norm = a => mul(a, 1 / (len(a) || 1));
+const cross = (a, b) => v3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+function hexA(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; }
+
+// Posiciones 3D: anillo inclinado con alturas alternas (se aprecia la profundidad al girar)
+const HEIGHTS = [210, -70, 170, -210, 40, -190, 200, -30, -150];
+const nodes = PEOPLE.map((p, i) => {
+  const a = i * 2 * Math.PI / PEOPLE.length;
+  const n = { ...p, i, pos: v3(620 * Math.sin(a), HEIGHTS[i], 620 * Math.cos(a)),
+    a: .14, s: .6, glow: 0, img: null, tilt: .35 + (i % 3) * .35, spin: .5 + (i % 4) * .12, dots: {} };
+  loadPhoto(n, 'fotos/' + p.foto, ['jpg', 'png', 'jpeg', 'webp']);
+  return n;
+});
+const byId = Object.fromEntries(nodes.map(n => [n.id, n]));
+const ORIGIN = v3(0, 0, 0);
+
+function loadPhoto(n, base, exts) {
+  let k = 0;
+  const tryNext = () => {
+    if (k >= exts.length) return;
+    const im = new Image();
+    im.onload = () => { n.img = im; };
+    im.onerror = tryNext;
+    im.src = base + '.' + exts[k++];
+  };
+  tryNext();
+}
+
+// Arcos 3D (curvas de Bézier cuadráticas precalculadas)
+const SAMPLES = 56;
+function arc(A, B, lift, bulge) {
+  const M = mul(add(A, B), .5);
+  const dir = len(M) > 90 ? norm(M) : norm(cross(sub(B, A), v3(0, 1, 0)));
+  const C = add(add(M, mul(dir, len(sub(B, A)) * bulge)), v3(0, lift, 0));
+  const pts = [];
+  for (let s = 0; s <= SAMPLES; s++) {
+    const t = s / SAMPLES, u = 1 - t;
+    pts.push(v3(u * u * A.x + 2 * u * t * C.x + t * t * B.x, u * u * A.y + 2 * u * t * C.y + t * t * B.y, u * u * A.z + 2 * u * t * C.z + t * t * B.z));
+  }
+  return pts;
+}
+const edges = [];
+THEMES.forEach((t, ti) => {
+  const m = t.members;
+  for (let i = 0; i < m.length; i++) for (let j = i + 1; j < m.length; j++)
+    edges.push({ theme: t.id, ti, color: t.color, pts: arc(byId[m[i]].pos, byId[m[j]].pos, (ti - 2.5) * 26, .30),
+      prog: 0, goal: 0, alpha: 0, goalA: 0, live: 0, speed: .12 + Math.random() * .08, off: Math.random() });
+});
+nodes.forEach(n => edges.push({ theme: 'spoke', ti: -1, color: '#00CC66', pts: arc(ORIGIN, n.pos, 60, .12),
+  prog: 0, goal: 0, alpha: 0, goalA: 0, live: 0, speed: .16, off: Math.random() }));
+
+// Partículas: estrellas lejanas + polvo cercano
+const stars = Array.from({ length: 1400 }, () => {
+  const u = Math.random() * 2 - 1, ph = Math.random() * 6.283, r = 2600 + Math.random() * 2200, q = Math.sqrt(1 - u * u);
+  return { p: v3(r * q * Math.cos(ph), r * u, r * q * Math.sin(ph)), b: Math.random(), tw: Math.random() * 6.28, c: Math.random() < .15 ? '255,220,170' : '190,215,255' };
+});
+const dust = Array.from({ length: 420 }, () => ({ p: v3((Math.random() - .5) * 2600, (Math.random() - .5) * 1600, (Math.random() - .5) * 2600), v: 8 + Math.random() * 18, b: Math.random() }));
+
+/* ============================================================
+   CÁMARA (órbita alrededor de un objetivo)
+   ============================================================ */
+const cam = { tx: 0, ty: 0, tz: 0, yaw: 0, pitch: .3, dist: 2100, cy: 540, net: .3 };
+const goal = { ...cam, spin: .06 };
+let CY_ = 540, sy, cyw, sp, cp;
+function setupCam(t) {
+  const yaw = cam.yaw + .05 * Math.sin(t * .37), pitch = cam.pitch + .03 * Math.sin(t * .29);
+  sy = Math.sin(yaw); cyw = Math.cos(yaw); sp = Math.sin(pitch); cp = Math.cos(pitch); CY_ = cam.cy;
+}
+function proj(p) {
+  const dx = p.x - cam.tx, dy = p.y - cam.ty, dz = p.z - cam.tz;
+  const x1 = dx * cyw - dz * sy, z1 = dx * sy + dz * cyw;
+  const y2 = dy * cp - z1 * sp, z2 = dy * sp + z1 * cp;
+  const d = cam.dist - z2;
+  if (d < 30) return null;
+  const k = FOCAL / d;
+  return { x: 960 + x1 * k, y: CY_ - y2 * k, k, d };
+}
+function facing(p, maxPitch = .45) { return { yaw: Math.atan2(p.x, p.z), pitch: clamp(Math.atan2(p.y, Math.hypot(p.x, p.z)), -maxPitch, maxPitch) }; }
+const angDiff = (a, b) => { let d = (a - b) % (2 * Math.PI); if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; return d; };
+
+/* ============================================================
+   GUION
+   ============================================================ */
+const S = [{ kind: 'title' }, { kind: 'intro' }];
+PEOPLE.forEach(p => S.push({ kind: 'person', id: p.id }));
+S.push({ kind: 'question' });
+THEMES.forEach(t => S.push({ kind: 'theme', id: t.id }));
+S.push({ kind: 'final' }, { kind: 'how' }, { kind: 'close' });
+const themeById = id => THEMES.find(t => t.id === id);
+const qIdx = S.findIndex(s => s.kind === 'question'), firstTheme = S.findIndex(s => s.kind === 'theme');
+let cur = -1, panelTimer, finalOn = false, activeTheme = null, focusId = null;
+
+function render(i, instant) {
+  cur = clamp(i, 0, S.length - 1);
+  const st = S[cur];
+  finalOn = ['final', 'how', 'close'].includes(st.kind);
+  const personIdx = st.kind === 'person' ? PEOPLE.findIndex(p => p.id === st.id) : -1;
+  const allShown = cur >= qIdx;
+  const themeIdx = st.kind === 'theme' ? cur - firstTheme : -1;
+  activeTheme = st.kind === 'theme' ? themeById(st.id) : null;
+  focusId = st.kind === 'person' ? st.id : null;
+  const centerPanel = ['title', 'intro', 'question', 'how', 'close'].includes(st.kind);
+
+  // Nodos
+  nodes.forEach((n, k) => {
+    const shown = allShown || (personIdx >= 0 && k <= personIdx) || st.kind === 'title' && false;
+    n.goalA = shown ? (activeTheme && !activeTheme.members.includes(n.id) ? .28 : 1) : (personIdx >= 0 ? .22 : .16);
+    n.goalS = shown ? (activeTheme && !activeTheme.members.includes(n.id) ? .82 : 1) : .62;
+    n.goalGlow = (focusId === n.id || (activeTheme && activeTheme.members.includes(n.id))) ? 1 : 0;
+    n.themes = THEMES.filter((t, ti) => t.members.includes(n.id) && (finalOn || (themeIdx >= 0 && ti <= themeIdx)));
+  });
+
+  // Aristas
+  edges.forEach(e => {
+    let state = 'off';
+    if (e.theme === 'spoke') state = finalOn ? 'spoke' : 'off';
+    else if (finalOn) state = 'final';
+    else if (themeIdx >= 0 && e.ti === themeIdx) state = 'on';
+    else if (themeIdx >= 0 && e.ti < themeIdx) state = 'past';
+    e.goal = state === 'off' ? 0 : 1;
+    e.goalA = { off: e.alpha, on: 1, past: .22, final: .55, spoke: .5 }[state];
+    e.live = state === 'on' ? 1 : (state === 'final' || state === 'spoke') ? .75 : 0;
+  });
+
+  // Cámara
+  goal.spin = 0;
+  if (st.kind === 'person') {
+    const n = byId[st.id], f = facing(n.pos);
+    Object.assign(goal, { tx: n.pos.x * .55, ty: n.pos.y * .55, tz: n.pos.z * .55, yaw: f.yaw, pitch: f.pitch * .8 + .08, dist: 1080, cy: 430, net: 1 });
+  } else if (st.kind === 'theme') {
+    const ms = activeTheme.members.map(id => byId[id].pos);
+    const c = mul(ms.reduce(add, v3(0, 0, 0)), 1 / ms.length);
+    const f = len(c) > 60 ? facing(c, .35) : { yaw: cam.yaw, pitch: .25 };
+    Object.assign(goal, { tx: c.x * .35, ty: c.y * .35, tz: c.z * .35, yaw: f.yaw, pitch: f.pitch * .6 + .18, dist: 1800, cy: 420, net: 1, spin: .025 });
+  } else if (st.kind === 'final') {
+    Object.assign(goal, { tx: 0, ty: 0, tz: 0, pitch: .32, dist: 1850, cy: 410, net: 1, spin: .16 });
+  } else if (st.kind === 'how' || st.kind === 'close') {
+    Object.assign(goal, { tx: 0, ty: 0, tz: 0, pitch: .38, dist: 2300, cy: 540, net: .42, spin: .12 });
+  } else if (st.kind === 'question') {
+    Object.assign(goal, { tx: 0, ty: 0, tz: 0, pitch: .45, dist: 2050, cy: 540, net: .55, spin: .08 });
+  } else {
+    Object.assign(goal, { tx: 0, ty: 0, tz: 0, pitch: st.kind === 'title' ? .22 : .35, dist: st.kind === 'title' ? 2500 : 2200, cy: 540, net: .5, spin: .06 });
+  }
+  if (goal.spin === 0) goal.yaw = cam.yaw + angDiff(goal.yaw, cam.yaw);
+
+  if (instant) {
+    Object.assign(cam, { tx: goal.tx, ty: goal.ty, tz: goal.tz, yaw: goal.yaw, pitch: goal.pitch, dist: goal.dist, cy: goal.cy, net: goal.net });
+    nodes.forEach(n => { n.a = n.goalA; n.s = n.goalS; n.glow = n.goalGlow; n.themes.forEach(t => n.dots[t.id] = 1); });
+    edges.forEach(e => { e.prog = e.goal; e.alpha = e.goalA; });
+    stage.classList.add('no-anim'); setTimeout(() => stage.classList.remove('no-anim'), 60);
+  }
+
+  // Interfaz
+  legend.innerHTML = THEMES.map((t, ti) => `<div class="${(finalOn || (themeIdx >= 0 && ti <= themeIdx)) ? 'in' : ''} ${ti === themeIdx ? 'cur' : ''}"><i style="background:${t.color};color:${t.color}"></i>${t.name}</div>`).join('');
+  document.getElementById('note').classList.toggle('in', st.kind === 'theme' || finalOn || st.kind === 'question');
+  panelBox.className = centerPanel ? 'center' : 'bottom';
+  document.getElementById('logo').classList.toggle('off', st.kind === 'close');
+  clearTimeout(panelTimer);
+  panel.classList.remove('show');
+  const html = panelHTML(st);
+  const show = () => { panel.innerHTML = html; void panel.offsetWidth; panel.classList.add('show'); };
+  if (instant) show(); else panelTimer = setTimeout(show, 450);
+  document.getElementById('progress').style.width = (100 * cur / (S.length - 1)) + '%';
+  history.replaceState(null, '', location.pathname + location.search + '#' + cur);
+}
+
+function panelHTML(st) {
+  switch (st.kind) {
+    case 'title': return `<div class="kicker">Premios Imparables 2026</div>
+      <div class="title xl">La red de los Imparables</div>
+      <div class="lead">Nueve trayectorias. Un mismo hilo.</div>
+      <div class="tagline">Liderazgo y transformación en sanidad</div>`;
+    case 'intro': return `<div class="kicker">Nueve premiados</div>
+      <div class="title md">Nueve campos distintos</div>
+      <div class="lead">Trasplantes, inteligencia artificial, salud pública, terapias avanzadas, rehabilitación, neurotecnología, longevidad, genética y servicio público.</div>`;
+    case 'person': {
+      const p = byId[st.id];
+      return `<div class="kicker">Premiado ${p.i + 1} de ${PEOPLE.length}</div>
+        <div class="title md">${p.full}</div><div class="lead">${p.field}</div>`;
+    }
+    case 'question': return `<div class="kicker">La pregunta</div>
+      <div class="title md">¿Qué los une?</div>
+      <div class="lead">Buscamos los ámbitos que comparten.<br>Cada color es una afinidad temática.</div>`;
+    case 'theme': {
+      const t = themeById(st.id), names = t.members.map(id => byId[id].name);
+      return `<div class="kicker">Afinidad ${THEMES.indexOf(t) + 1} de ${THEMES.length}</div>
+        <div class="title md"><span class="chip" style="background:${t.color};color:${t.color}"></span>${t.name}</div>
+        <div class="lead">${t.text}</div>
+        <div class="small">${names.join(' · ')}</div>`;
+    }
+    case 'final': return `<div class="kicker">Los nueve, conectados · Lo que les une</div>
+      <div class="title">Son todos Imparables</div>
+      <div class="lead">Caminos distintos que avanzan en la misma dirección: las personas.</div>
+      <div class="small">Liderazgo y transformación en sanidad</div>`;
+    case 'how': return `<div class="kicker">Cómo se ha hecho</div>
+      <div class="title md">Una red tejida con IA</div>
+      <div class="lead">Con ayuda de una inteligencia artificial, analizamos los ámbitos de trabajo de cada premiado y propusimos los temas que comparten. Después, los revisamos uno a uno.</div>
+      <div class="small">La IA también ha ayudado a programar esta web y su animación 3D. Las líneas muestran afinidades temáticas, no colaboraciones entre los premiados.</div>`;
+    case 'close': return `<div class="kicker">V edición · Premios Imparables</div>
+      <div class="title xl">Gracias</div>
+      <div class="lead">A los nueve Imparables, por conectar ciencia, tecnología y servicio público con la vida de las personas.</div>
+      <img class="logo-lg" alt="Italfarmaco" src="${LOGO}">`;
+  }
+}
+
+/* ============================================================
+   DIBUJO
+   ============================================================ */
+function drawSphere(n, P, r, alpha, t) {
+  const x = P.x, y = P.y;
+  const focusCol = n.glow > .01 ? (activeTheme ? activeTheme.color : '#00CC66') : '#4FA9D8';
+  // halo
+  const hr = r * (1.9 + .5 * n.glow);
+  const hg = g.createRadialGradient(x, y, r * .8, x, y, hr);
+  hg.addColorStop(0, hexA(focusCol, (.28 + .4 * n.glow) * alpha)); hg.addColorStop(1, hexA(focusCol, 0));
+  g.fillStyle = hg; g.beginPath(); g.arc(x, y, hr, 0, 6.283); g.fill();
+  g.save(); g.globalAlpha = alpha;
+  g.beginPath(); g.arc(x, y, r, 0, 6.283); g.closePath();
+  if (n.img) {
+    g.save(); g.clip();
+    g.fillStyle = '#fff'; g.fillRect(x - r, y - r, 2 * r, 2 * r);
+    const s = Math.max(2 * r / n.img.naturalWidth, 2 * r / n.img.naturalHeight);
+    g.drawImage(n.img, x - n.img.naturalWidth * s / 2, y - n.img.naturalHeight * s / 2, n.img.naturalWidth * s, n.img.naturalHeight * s);
+    g.restore();
+  } else {
+    const bg = g.createRadialGradient(x - r * .35, y - r * .4, r * .1, x, y, r);
+    bg.addColorStop(0, '#1D6A9E'); bg.addColorStop(.6, '#003057'); bg.addColorStop(1, '#00182E');
+    g.fillStyle = bg; g.fill();
+    g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = `700 ${Math.round(r * (n.ini.length > 2 ? .5 : .62))}px Segoe UI, Arial, sans-serif`;
+    g.fillText(n.ini, x, y + r * .03);
+  }
+  // sombreado esférico + brillo especular
+  const sh = g.createRadialGradient(x - r * .35, y - r * .4, r * .15, x, y, r * 1.02);
+  sh.addColorStop(0, 'rgba(255,255,255,.28)'); sh.addColorStop(.35, 'rgba(255,255,255,0)'); sh.addColorStop(.8, 'rgba(0,15,30,.25)'); sh.addColorStop(1, 'rgba(0,15,30,.65)');
+  g.fillStyle = sh; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill();
+  g.lineWidth = Math.max(2, r * .045) * (1 + n.glow);
+  g.strokeStyle = n.glow > .01 ? hexA(focusCol, .6 + .4 * n.glow) : 'rgba(197,237,205,.55)';
+  g.stroke();
+  g.restore();
+}
+
+function drawLabel(n, P, r, alpha) {
+  const big = n.id === focusId;
+  const fs = clamp(r * .36, 19, 38) * (big ? 1.05 : 1);
+  g.save(); g.globalAlpha = alpha; g.textAlign = 'center'; g.textBaseline = 'top';
+  g.lineJoin = 'round'; g.strokeStyle = 'rgba(0,17,31,.92)'; g.lineWidth = 6;
+  g.font = `700 ${fs}px Segoe UI, Arial, sans-serif`;
+  const y = P.y + r + 12;
+  g.strokeText(n.name, P.x, y); g.fillStyle = '#fff'; g.fillText(n.name, P.x, y);
+  g.font = `400 ${fs * .72}px Segoe UI, Arial, sans-serif`;
+  g.strokeText(n.sub, P.x, y + fs * 1.18); g.fillStyle = '#B0DFDB'; g.fillText(n.sub, P.x, y + fs * 1.18);
+  g.restore();
+}
+
+function drawDot(col, P, rad, alpha) {
+  const gg = g.createRadialGradient(P.x, P.y, 0, P.x, P.y, rad * 3);
+  gg.addColorStop(0, hexA(col, alpha)); gg.addColorStop(.3, hexA(col, alpha * .5)); gg.addColorStop(1, hexA(col, 0));
+  g.fillStyle = gg; g.beginPath(); g.arc(P.x, P.y, rad * 3, 0, 6.283); g.fill();
+  g.fillStyle = `rgba(255,255,255,${alpha})`; g.beginPath(); g.arc(P.x, P.y, rad * .7, 0, 6.283); g.fill();
+}
+
+let last = performance.now(), t0 = last, fpsAcc = 0, fpsN = 0;
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  const t = (now - t0) / 1000;
+  fpsAcc += dt; fpsN++; if (fpsAcc > 1) { document.getElementById('fps').textContent = Math.round(fpsN / fpsAcc) + ' fps'; fpsAcc = 0; fpsN = 0; }
+
+  // cámara suave
+  if (goal.spin) goal.yaw += goal.spin * dt;
+  const kc = 1 - Math.exp(-dt * 1.9);
+  for (const key of ['tx', 'ty', 'tz', 'pitch', 'dist', 'cy', 'net']) cam[key] += (goal[key] - cam[key]) * kc;
+  cam.yaw += angDiff(goal.yaw, cam.yaw) * kc;
+  setupCam(t);
+
+  const kn = 1 - Math.exp(-dt * 4);
+  nodes.forEach(n => {
+    n.a += (n.goalA - n.a) * kn; n.s += (n.goalS - n.s) * kn; n.glow += (n.goalGlow - n.glow) * kn;
+    for (const th of THEMES) { const want = n.themes.includes(th) ? 1 : 0; n.dots[th.id] = (n.dots[th.id] || 0) + (want - (n.dots[th.id] || 0)) * kn; }
+  });
+
+  g.clearRect(0, 0, W, H);
+  g.globalCompositeOperation = 'lighter';
+
+  // estrellas
+  for (const s of stars) {
+    const P = proj(s.p); if (!P || P.x < -5 || P.x > W + 5 || P.y < -5 || P.y > H + 5) continue;
+    const a = (.35 + .45 * s.b) * (.6 + .4 * Math.sin(t * 1.4 + s.tw));
+    g.fillStyle = `rgba(${s.c},${a})`; const z = .8 + s.b * 1.6; g.fillRect(P.x, P.y, z, z);
+  }
+  // polvo cercano (paralaje)
+  for (const d of dust) {
+    d.p.y += d.v * dt; if (d.p.y > 800) d.p.y = -800;
+    const P = proj(d.p); if (!P || P.x < 0 || P.x > W || P.y < 0 || P.y > H) continue;
+    const r = clamp(P.k * 2.2, .5, 5);
+    g.fillStyle = `rgba(176,223,219,${(.12 + .25 * d.b) * clamp(P.k * 1.4, .2, 1)})`;
+    g.beginPath(); g.arc(P.x, P.y, r, 0, 6.283); g.fill();
+  }
+
+  // arcos
+  const net = cam.net;
+  for (const e of edges) {
+    const dir = e.goal > e.prog ? 1 : -1;
+    e.prog = clamp(e.prog + dir * dt / (dir > 0 ? 1.7 : .6), 0, 1);
+    if (dir > 0 && e.goal === e.prog) e.prog = e.goal;
+    e.alpha += (e.goalA - e.alpha) * kn;
+    if (e.prog <= 0.001) continue;
+    const pp = ease(e.prog), nSeg = Math.max(1, Math.floor(pp * SAMPLES));
+    const P = []; for (let s = 0; s <= nSeg; s++) P.push(proj(e.pts[s]));
+    if (P.some(p => !p)) continue;
+    const kMid = P[nSeg >> 1].k, a = e.alpha * net;
+    const lw = e.theme === 'spoke' ? 2.4 : 4.2;
+    for (const [w, al] of [[lw * 4.5, .12], [lw * 1.8, .35], [lw * .7, .95]]) {
+      g.strokeStyle = hexA(al > .9 ? '#ffffff' : e.color, a * al * (al > .9 ? .55 : 1));
+      g.lineWidth = Math.max(.6, w * kMid); g.lineCap = 'round';
+      g.beginPath(); g.moveTo(P[0].x, P[0].y); for (let s = 1; s <= nSeg; s++) g.lineTo(P[s].x, P[s].y); g.stroke();
+    }
+    if (e.live && e.prog > .98) {
+      for (const o of [0, .5]) {
+        const u = ((t * e.speed + e.off + o) % 1) * SAMPLES, i0 = Math.floor(u), f = u - i0;
+        const A = e.pts[i0], B = e.pts[Math.min(SAMPLES, i0 + 1)];
+        const Q = proj(v3(A.x + (B.x - A.x) * f, A.y + (B.y - A.y) * f, A.z + (B.z - A.z) * f));
+        if (Q) drawDot(e.color, Q, clamp(7 * Q.k, 2.5, 10), e.live * net);
+      }
+    }
+  }
+
+  // núcleo central en el final
+  const core = proj(ORIGIN);
+  const coreA = edges[edges.length - 1].prog * net;
+  if (core && coreA > .01) {
+    const r = 46 * core.k * (1 + .08 * Math.sin(t * 2.2));
+    const cg = g.createRadialGradient(core.x, core.y, 0, core.x, core.y, r * 4);
+    cg.addColorStop(0, `rgba(225,255,236,${coreA})`); cg.addColorStop(.18, `rgba(0,204,102,${.8 * coreA})`); cg.addColorStop(1, 'rgba(0,204,102,0)');
+    g.fillStyle = cg; g.beginPath(); g.arc(core.x, core.y, r * 4, 0, 6.283); g.fill();
+  }
+
+  // nodos + satélites, ordenados por profundidad
+  g.globalCompositeOperation = 'source-over';
+  const items = [];
+  nodes.forEach(n => {
+    const P = proj(n.pos); if (!P) return;
+    items.push({ d: P.d, kind: 'node', n, P });
+    THEMES.forEach((th, k) => {
+      const v = n.dots[th.id]; if (v < .02) return;
+      const m = n.themes.length || 1, idx = Math.max(0, n.themes.indexOf(th));
+      const ang = t * n.spin + idx * 2 * Math.PI / m + n.i;
+      const R = NODE_R * 1.55;
+      const wp = v3(n.pos.x + R * Math.cos(ang), n.pos.y + R * Math.sin(ang) * Math.sin(n.tilt), n.pos.z + R * Math.sin(ang) * Math.cos(n.tilt));
+      const Q = proj(wp); if (Q) items.push({ d: Q.d, kind: 'dot', col: th.color, P: Q, v, a: n.a });
+    });
+  });
+  items.sort((a, b) => b.d - a.d);
+  for (const it of items) {
+    const fog = clamp(1.25 - (it.P.d - cam.dist) / 1400, .35, 1);
+    if (it.kind === 'dot') { g.globalCompositeOperation = 'lighter'; drawDot(it.col, it.P, clamp(9 * it.P.k, 3, 13) * it.v, it.v * it.a * fog * net); g.globalCompositeOperation = 'source-over'; continue; }
+    const n = it.n, r = NODE_R * it.P.k * n.s;
+    // atenuar nodos secundarios que suben a la franja de la cabecera
+    const top = n.glow > .3 ? 1 : clamp((it.P.y - r - 20) / 140, .25, 1);
+    const a = n.a * fog * (net * .7 + .3) * top;
+    drawSphere(n, it.P, r, a, t);
+    drawLabel(n, it.P, r, clamp(a * (net > .7 ? 1 : .5), 0, 1));
+  }
+
+  requestAnimationFrame(frame);
+}
+
+/* ============================================================
+   CONTROLES
+   ============================================================ */
+let auto = null;
+const next = () => { if (cur < S.length - 1) render(cur + 1); };
+const prev = () => { if (cur > 0) render(cur - 1); };
+addEventListener('keydown', e => {
+  const k = e.key;
+  if (['ArrowRight', ' ', 'PageDown', 'Enter', 'ArrowDown'].includes(k)) { e.preventDefault(); next(); }
+  else if (['ArrowLeft', 'PageUp', 'Backspace', 'ArrowUp'].includes(k)) { e.preventDefault(); prev(); }
+  else if (k === 'f' || k === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+  else if (k === 'h' || k === 'H') document.getElementById('help').classList.toggle('hide');
+  else if (k === 'p' || k === 'P') { const f = document.getElementById('fps'); f.style.display = f.style.display === 'block' ? 'none' : 'block'; }
+  else if (k === 'r' || k === 'R' || k === 'Home') render(0);
+  else if (k === 'End') render(S.length - 1);
+  else if (k === 'a' || k === 'A') {
+    if (auto) { clearInterval(auto); auto = null; }
+    else auto = setInterval(() => { if (cur >= S.length - 1) { clearInterval(auto); auto = null; } else next(); }, 10000);
+  }
+});
+addEventListener('click', next);
+let idleT;
+addEventListener('mousemove', () => { document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(() => document.body.classList.add('idle'), 2000); });
+
+if (/nohelp/.test(location.search)) document.getElementById('help').classList.add('hide');
+const startAt = parseInt(location.hash.slice(1), 10);
+render(isNaN(startAt) ? 0 : startAt, !isNaN(startAt) && startAt > 0);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
